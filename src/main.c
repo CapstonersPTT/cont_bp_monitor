@@ -17,15 +17,27 @@
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
 	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
+//Initialize Logger
+LOG_MODULE_REGISTER(bp, LOG_LEVEL_DEBUG);
+
+//Stacksize for threads
+#define STACKSIZE 1024
+//Thread priorities
+#define READ_THREAD_PRIORITY 1
+#define CALC_THREAD_PRIORITY 2
+#define BLE_THREAD_PRIORITY 3
+
+//Time between sensor reads
+#define SENSOR_SLEEP_MS 100
+
 /* Data of ADC io-channels specified in devicetree. */
 static const struct adc_dt_spec adc_channels[] = {
 	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
 			     DT_SPEC_AND_COMMA)
 };
 
-int main(void)
-{
-	int err;
+void read_thread(void) {
+        int err;
 	uint32_t count = 0;
 	uint16_t buf;
 	struct adc_sequence sequence = {
@@ -34,21 +46,8 @@ int main(void)
 		.buffer_size = sizeof(buf),
 	};
 
-	/* Configure channels individually prior to sampling. */
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-		if (!adc_is_ready_dt(&adc_channels[i])) {
-			printk("ADC controller device %s not ready\n", adc_channels[i].dev->name);
-			return 0;
-		}
-
-		err = adc_channel_setup_dt(&adc_channels[i]);
-		if (err < 0) {
-			printk("Could not setup channel #%d (%d)\n", i, err);
-			return 0;
-		}
-	}
-
-	while (1) {
+        //Read from ADC
+        while (1) {
 		printk("ADC reading[%u]:\n", count++);
 		for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
 			int32_t val_mv;
@@ -85,8 +84,37 @@ int main(void)
 				printk(" = %"PRId32" mV\n", val_mv);
 			}
 		}
-
-		k_sleep(K_MSEC(100));
+		k_msleep(SENSOR_SLEEP_MS);
 	}
-	return 0;
 }
+
+void calc_thread(void) {
+        //Put Algorithm Here
+        while (1) {
+                k_msleep(60);
+        }
+}
+
+int main(void)
+{
+	int err;
+	/* Configure ADC channels */
+	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
+		if (!adc_is_ready_dt(&adc_channels[i])) {
+			printk("ADC controller device %s not ready\n", adc_channels[i].dev->name);
+			return 0;
+		}
+
+		err = adc_channel_setup_dt(&adc_channels[i]);
+		if (err < 0) {
+			printk("Could not setup channel #%d (%d)\n", i, err);
+			return 0;
+		}
+	}
+}
+
+//Initialize the threads
+K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL, 
+                READ_THREAD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
+                CALC_THREAD_PRIORITY, 0, 0);
