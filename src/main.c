@@ -18,7 +18,7 @@
 	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
 //Initialize Logger
-LOG_MODULE_REGISTER(bp, LOG_LEVEL_DEBUG);
+//LOG_MODULE_REGISTER(bp, LOG_LEVEL_DEBUG);
 
 //Stacksize for threads
 #define STACKSIZE 1024
@@ -30,31 +30,31 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DEBUG);
 //Time between sensor reads
 #define SENSOR_SLEEP_MS 100
 
-/* Data of ADC io-channels specified in devicetree. */
+//Data of ADC io-channels specified in devicetree
 static const struct adc_dt_spec adc_channels[] = {
 	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
 			     DT_SPEC_AND_COMMA)
 };
 
 void read_thread(void) {
-        int err;
+    int err;
 	uint32_t count = 0;
 	uint16_t buf;
 	struct adc_sequence sequence = {
 		.buffer = &buf,
-		/* buffer size in bytes, not number of samples */
+		//buffer size in bytes, not number of samples
 		.buffer_size = sizeof(buf),
 	};
 
-        //Read from ADC
-        while (1) {
+	//Read from ADC
+	while (1) {
 		printk("ADC reading[%u]:\n", count++);
 		for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
 			int32_t val_mv;
 
 			printk("- %s, channel %d: ",
-			       adc_channels[i].dev->name,
-			       adc_channels[i].channel_id);
+					adc_channels[i].dev->name,
+					adc_channels[i].channel_id);
 
 			(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
 
@@ -65,10 +65,10 @@ void read_thread(void) {
 			}
 
 			/*
-			 * If using differential mode, the 16 bit value
-			 * in the ADC sample buffer should be a signed 2's
-			 * complement value.
-			 */
+				* If using differential mode, the 16 bit value
+				* in the ADC sample buffer should be a signed 2's
+				* complement value.
+				*/
 			if (adc_channels[i].channel_cfg.differential) {
 				val_mv = (int32_t)((int16_t)buf);
 			} else {
@@ -76,7 +76,7 @@ void read_thread(void) {
 			}
 			printk("%"PRId32, val_mv);
 			err = adc_raw_to_millivolts_dt(&adc_channels[i],
-						       &val_mv);
+								&val_mv);
 			/* conversion to mV may not be supported, skip if not */
 			if (err < 0) {
 				printk(" (value in mV not available)\n");
@@ -89,16 +89,18 @@ void read_thread(void) {
 }
 
 void calc_thread(void) {
-        //Put Algorithm Here
-        while (1) {
-                k_msleep(60);
-        }
+	//Put Algorithm Here
+	//TODO: Add method of storing data from PPG sensors to be accessed here
+	while (1) {
+			k_msleep(60);
+	}
 }
 
 int main(void)
 {
 	int err;
-	/* Configure ADC channels */
+	//Configure ADC channels
+	printk("Configuring ADC channels\n");
 	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
 		if (!adc_is_ready_dt(&adc_channels[i])) {
 			printk("ADC controller device %s not ready\n", adc_channels[i].dev->name);
@@ -116,5 +118,5 @@ int main(void)
 //Initialize the threads
 K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL, 
                 READ_THREAD_PRIORITY, 0, 0);
-K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
-                CALC_THREAD_PRIORITY, 0, 0);
+/*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
+                CALC_THREAD_PRIORITY, 0, 0); */
