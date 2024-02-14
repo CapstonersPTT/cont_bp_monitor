@@ -61,17 +61,39 @@
 	io-channel-map = <0 &adc 1>, <1 &adc 2>, <2 &adc 4>, <3 &adc 5>, <4 &adc 6>, <5 &adc 7>;
 };
 
-&spi1 {
+&pinctrl {
+	spi0_default: spi0_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 27)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 26)>,
+				<NRF_PSEL(SPIM_MISO, 0, 29)>;
+		};
+	};
+
+	spi0_sleep: spi0_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 27)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 26)>,
+				<NRF_PSEL(SPIM_MISO, 0, 29)>;
+		};
+	};
+};
+
+&spi0 {
 	compatible = "nordic,nrf-spi";
 	status = "okay";
 	cs-gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;
 	pinctrl-0 = <&spi1_default>;
 	pinctrl-1 = <&spi1_sleep>;
 	pinctrl-names = "default", "sleep";
-	adpd1080: adpd1080@0 {
+	clock-frequency = <DT_FREQ_M(8)>;
+	adpd1801: adpd1801@0 {
 		compatible = "spi-device";
 		reg = <0>;
-		spi-max-frequency = <1600000>;
-		label = "adpd1080";
+		spi-max-frequency = <DT_FREQ_M(10)>;
+		label = "adpd1801";
 	};
+};
+&spi1 {
+	status = "okay";
 };

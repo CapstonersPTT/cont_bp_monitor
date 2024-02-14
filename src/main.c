@@ -1,6 +1,8 @@
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -9,6 +11,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/drivers/gpio.h>
 
 #if !DT_NODE_EXISTS(DT_PATH(zephyr_user)) || \
 	!DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
@@ -35,6 +38,13 @@
 static const struct adc_dt_spec adc_channels[] = {
 	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
 			     DT_SPEC_AND_COMMA)
+};
+
+//SPI config values
+static const struct spi_config spi_cfg = {
+    .frequency = DT_PROP(DT_NODELABEL(spi0), clock_frequency),
+    .operation = SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE,
+    .cs = SPI_CS_CONTROL_INIT(DT_NODELABEL(adpd1801), 0),
 };
 
 void read_thread(void) {
@@ -99,6 +109,11 @@ void calc_thread(void) {
 
 int main(void)
 {
+	uint8_t cmd = 0x00;
+	struct spi_buf tx_buf = {.buf = &cmd, .len = 1};
+    struct spi_buf_set tx_bufs = {.buffers = &tx_buf, .count = 1};
+    const struct device *spi;
+
 	int err;
 	//Configure ADC channels
 	printk("Configuring ADC channels\n");
@@ -113,6 +128,12 @@ int main(void)
 			printk("Could not setup channel #%d (%d)\n", i, err);
 			return 0;
 		}
+	}
+
+	spi = device_get_binding("SPI_0");
+    if (!device_is_ready(spi)) {
+        printk("Device SPI not ready, aborting test");
+        return 0;
 	}
 }
 
