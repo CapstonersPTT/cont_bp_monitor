@@ -10,6 +10,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
 
@@ -22,10 +23,10 @@
 	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
 //Initialize Logger
-//LOG_MODULE_REGISTER(bp, LOG_LEVEL_DEBUG);
+LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 
 //Stacksize for threads
-#define STACKSIZE 1024
+#define STACKSIZE 2048
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
 #define CALC_THREAD_PRIORITY 2
@@ -47,54 +48,31 @@ static const struct spi_config spi_cfg = {
     .cs = SPI_CS_CONTROL_INIT(DT_NODELABEL(adpd1801), 0),
 };
 
+static uint16_t spi_cmd = 0x0000;
+struct spi_buf tx_buf  = {.buf = &spi_cmd, .len = 4};
+struct spi_buf_set tx_bufs = {.buffers = &tx_buf, .count = 1};
+struct spi_buf rx_buf  = {.buf = &spi_cmd, .len = 4};
+struct spi_buf_set rx_bufs = {.buffers = &rx_buf, .count = 1};
+const struct device *spi;
+
+//TODO: define array for holding PPG sensor readings
+
 void read_thread(void) {
     int err;
-	uint32_t count = 0;
-	uint16_t buf;
-	struct adc_sequence sequence = {
-		.buffer = &buf,
-		//buffer size in bytes, not number of samples
-		.buffer_size = sizeof(buf),
-	};
+	//Set up PPG sensor
+	spi_cmd = 0xcb40; //enable clock
+	err = spi_write(spi, &spi_cfg, &tx_bufs);
+	spi_cmd = 0x0109; //enter program mode
+	err = spi_write(spi, &spi_cfg, &tx_bufs);
+	//TODO: look at registers for configuration
 
-	//Read from ADC
+	spi_cmd = 0x0209; //start normal operation
+	err = spi_write(spi, &spi_cfg, &tx_bufs);
+
+	//Read from PPG Sensor (probably in a loop)
 	while (1) {
-		printk("ADC reading[%u]:\n", count++);
-		for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-			int32_t val_mv;
+		spi_read(spi, &spi_cfg, &rx_bufs);
 
-			printk("- %s, channel %d: ",
-					adc_channels[i].dev->name,
-					adc_channels[i].channel_id);
-
-			(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
-
-			err = adc_read(adc_channels[i].dev, &sequence);
-			if (err < 0) {
-				printk("Could not read (%d)\n", err);
-				continue;
-			}
-
-			/*
-				* If using differential mode, the 16 bit value
-				* in the ADC sample buffer should be a signed 2's
-				* complement value.
-				*/
-			if (adc_channels[i].channel_cfg.differential) {
-				val_mv = (int32_t)((int16_t)buf);
-			} else {
-				val_mv = (int32_t)buf;
-			}
-			printk("%"PRId32, val_mv);
-			err = adc_raw_to_millivolts_dt(&adc_channels[i],
-								&val_mv);
-			/* conversion to mV may not be supported, skip if not */
-			if (err < 0) {
-				printk(" (value in mV not available)\n");
-			} else {
-				printk(" = %"PRId32" mV\n", val_mv);
-			}
-		}
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 }
@@ -109,11 +87,6 @@ void calc_thread(void) {
 
 int main(void)
 {
-	uint8_t cmd = 0x00;
-	struct spi_buf tx_buf = {.buf = &cmd, .len = 1};
-    struct spi_buf_set tx_bufs = {.buffers = &tx_buf, .count = 1};
-    const struct device *spi;
-
 	int err;
 	//Configure ADC channels
 	printk("Configuring ADC channels\n");
@@ -132,7 +105,7 @@ int main(void)
 
 	spi = device_get_binding("SPI_0");
     if (!device_is_ready(spi)) {
-        printk("Device SPI not ready, aborting test");
+        printk("SPI device not ready, aborting test");
         return 0;
 	}
 }
@@ -142,3 +115,5 @@ K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL,
                 READ_THREAD_PRIORITY, 0, 0);
 /*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
                 CALC_THREAD_PRIORITY, 0, 0); */
+/*K_THREAD_DEFINE(bt_thread, STACKSIZE, BLE_thread, NULL, NULL, NULL, 
+                BLE_THREAD_PRIORITY, 0, 0); */

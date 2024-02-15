@@ -95,5 +95,5 @@
 	};
 };
 &spi1 {
-	status = "okay";
+	status = "disabled";
 };
