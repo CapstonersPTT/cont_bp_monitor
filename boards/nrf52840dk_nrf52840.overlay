@@ -7,7 +7,7 @@
 
 / {
 	zephyr,user {
-		io-channels = <&adc 1>;
+		io-channels = <&adc 0>, <&adc 1>;
 	};
 };
 
@@ -61,14 +61,40 @@
 	io-channel-map = <0 &adc 1>, <1 &adc 2>, <2 &adc 4>, <3 &adc 5>, <4 &adc 6>, <5 &adc 7>;
 };
 
-/ {
-	zephyr,user {
-		io-channels = <&adc 1>, <&adc 1>;
+&pinctrl {
+	spi0_default: spi0_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 27)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 26)>,
+				<NRF_PSEL(SPIM_MISO, 0, 29)>;
+		};
+	};
+
+	spi0_sleep: spi0_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 27)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 26)>,
+				<NRF_PSEL(SPIM_MISO, 0, 29)>;
+		};
 	};
 };
 
-/ {
-	zephyr,user {
-		io-channels = <&adc 0>, <&adc 1>;
+&spi0 {
+	compatible = "nordic,nrf-spi";
+	status = "okay";
+	cs-gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&spi1_default>;
+	pinctrl-1 = <&spi1_sleep>;
+	pinctrl-names = "default", "sleep";
+	clock-frequency = <DT_FREQ_M(8)>;
+	adpd1801: adpd1801@0 {
+		compatible = "spi-device";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+		label = "adpd1801";
 	};
+	
+};
+&spi1 {
+	status = "disabled";
 };
