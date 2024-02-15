@@ -13,6 +13,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
+#include "../drivers/sensor_ppg.h"
 
 #if !DT_NODE_EXISTS(DT_PATH(zephyr_user)) || \
 	!DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
@@ -65,7 +66,12 @@ void read_thread(void) {
 	spi_cmd = 0x0109; //enter program mode
 	err = spi_write(spi, &spi_cfg, &tx_bufs);
 	//TODO: look at registers for configuration
-
+	//Config time slots
+	//Config num channels
+	//Config LED settings?
+	//Config FIFO queue
+	//Config sampling freq
+	
 	spi_cmd = 0x0209; //start normal operation
 	err = spi_write(spi, &spi_cfg, &tx_bufs);
 
