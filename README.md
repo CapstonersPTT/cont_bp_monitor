@@ -12,6 +12,9 @@ Continuous Blood Pressure Monitor firmware for nrf52840 DK. The firmware handles
 ### Project Status
 In progess
 
+This branch contains code for communication with the external PPG sensor via SPI. Once algorithm development with the 
+test signals is finished, this code will be merged into the main branch. 
+
 ### Getting Started
 nRF Connect SDK Toolchain version: 2.5.2
 
