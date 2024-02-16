@@ -42,18 +42,6 @@ static const struct adc_dt_spec adc_channels[] = {
 			     DT_SPEC_AND_COMMA)
 };
 
-//SPI config values
-static const struct spi_config spi_cfg = {
-    .frequency = DT_PROP(DT_NODELABEL(spi0), clock_frequency),
-    .operation = SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE,
-    .cs = SPI_CS_CONTROL_INIT(DT_NODELABEL(adpd1801), 0),
-};
-
-static uint16_t spi_cmd = 0x0000;
-struct spi_buf tx_buf  = {.buf = &spi_cmd, .len = 4};
-struct spi_buf_set tx_bufs = {.buffers = &tx_buf, .count = 1};
-struct spi_buf rx_buf  = {.buf = &spi_cmd, .len = 4};
-struct spi_buf_set rx_bufs = {.buffers = &rx_buf, .count = 1};
 const struct device *spi;
 
 //TODO: define array for holding PPG sensor readings
@@ -61,23 +49,20 @@ const struct device *spi;
 void read_thread(void) {
     int err;
 	//Set up PPG sensor
-	spi_cmd = 0xcb40; //enable clock
-	err = spi_write(spi, &spi_cfg, &tx_bufs);
-	spi_cmd = 0x0109; //enter program mode
-	err = spi_write(spi, &spi_cfg, &tx_bufs);
-	//TODO: look at registers for configuration
+	err = ppg_start_config(spi);
+	//TODO: 
 	//Config time slots
 	//Config num channels
 	//Config LED settings?
 	//Config FIFO queue
 	//Config sampling freq
-	
-	spi_cmd = 0x0209; //start normal operation
-	err = spi_write(spi, &spi_cfg, &tx_bufs);
+
+	//Exit program mode
+	err = ppg_exit_config(spi);
 
 	//Read from PPG Sensor (probably in a loop)
 	while (1) {
-		spi_read(spi, &spi_cfg, &rx_bufs);
+		ppg_read_sensors(spi, spi, 20);
 
 		k_msleep(SENSOR_SLEEP_MS);
 	}
@@ -111,7 +96,7 @@ int main(void)
 
 	spi = device_get_binding("SPI_0");
     if (!device_is_ready(spi)) {
-        printk("SPI device not ready, aborting test");
+        printk("SPI device not ready, aborting");
         return 0;
 	}
 }
