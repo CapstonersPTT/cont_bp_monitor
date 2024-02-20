@@ -8,7 +8,7 @@ static const struct spi_config spi_cfg = {
 
 static uint32_t spi_cmd = 0x0;
 static uint8_t spi_reg; //Register address
-static uint8_t spi_rw; //Read (0)/ Write (1) bit
+static uint8_t spi_rw; //Read (0) / Write (1) bit
 static uint16_t spi_value; //Value to write to register
 struct spi_buf tx_buf  = {.buf = &spi_cmd, .len = 3};
 struct spi_buf_set tx_bufs = {.buffers = &tx_buf, .count = 1};

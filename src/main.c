@@ -53,16 +53,19 @@ void read_thread(void) {
 	//TODO: 
 	//Config time slots
 	//Config num channels
+	err = ppg_config_num_channels(spi);
 	//Config LED settings?
+	err = ppg_config_leds(spi);
 	//Config FIFO queue
+	err = ppg_config_fifo(spi);
 	//Config sampling freq
-
+	err = ppg_config_sampling_freq(spi, 200);
 	//Exit program mode
 	err = ppg_exit_config(spi);
 
 	//Read from PPG Sensor (probably in a loop)
 	while (1) {
-		ppg_read_sensors(spi, spi, 20);
+		//ppg_read_sensors(spi, spi, 20);
 
 		k_msleep(SENSOR_SLEEP_MS);
 	}
@@ -94,10 +97,10 @@ int main(void)
 		}
 	}
 
-	spi = device_get_binding("SPI_0");
-    if (!device_is_ready(spi)) {
+	printk("Configuring SPI\n");
+	spi = device_get_binding("spi0");
+    while (!device_is_ready(spi)) {
         printk("SPI device not ready, aborting");
-        return 0;
 	}
 }
 
