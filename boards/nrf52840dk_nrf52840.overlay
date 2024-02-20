@@ -88,7 +88,7 @@
 	pinctrl-names = "default", "sleep";
 	clock-frequency = <DT_FREQ_M(8)>;
 	adpd1801: adpd1801@0 {
-		compatible = "spi-device";
+		compatible = "zephyr,adpd1801";
 		reg = <0>;
 		spi-max-frequency = <DT_FREQ_M(10)>;
 		label = "adpd1801";
