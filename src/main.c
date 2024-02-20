@@ -42,30 +42,31 @@ static const struct adc_dt_spec adc_channels[] = {
 			     DT_SPEC_AND_COMMA)
 };
 
-const struct device *spi;
+#define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE
+
+static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
 
 //TODO: define array for holding PPG sensor readings
 
 void read_thread(void) {
     int err;
 	//Set up PPG sensor
-	err = ppg_start_config(spi);
+	err = ppg_start_config(spi_ppg);
 	//TODO: 
-	//Config time slots
 	//Config num channels
-	err = ppg_config_num_channels(spi);
-	//Config LED settings?
-	err = ppg_config_leds(spi);
+	err = ppg_config_num_channels(spi_ppg);
+	//Config LED settings and time slots
+	err = ppg_config_leds(spi_ppg);
 	//Config FIFO queue
-	err = ppg_config_fifo(spi);
+	err = ppg_config_fifo(spi_ppg);
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi, 200);
+	err = ppg_config_sampling_freq(spi_ppg, 200);
 	//Exit program mode
-	err = ppg_exit_config(spi);
+	err = ppg_exit_config(spi_ppg);
 
 	//Read from PPG Sensor (probably in a loop)
 	while (1) {
-		//ppg_read_sensors(spi, spi, 20);
+		//ppg_read_sensors(spi_ppg, spi_ppg, 20);
 
 		k_msleep(SENSOR_SLEEP_MS);
 	}
@@ -98,9 +99,9 @@ int main(void)
 	}
 
 	printk("Configuring SPI\n");
-	spi = device_get_binding("spi0");
-    while (!device_is_ready(spi)) {
-        printk("SPI device not ready, aborting");
+    if (!spi_is_ready_dt(&spi_ppg)) {
+        printk("SPI device not ready, aborting\n");
+		return 0;
 	}
 }
 
