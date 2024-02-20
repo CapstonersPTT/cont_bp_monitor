@@ -15,6 +15,8 @@ In progess
 This branch contains code for communication with the external PPG sensor via SPI. Once algorithm development with the 
 test signals is finished, this code will be merged into the main branch. 
 
+Testing status: not tested yet
+
 ### Getting Started
 nRF Connect SDK Toolchain version: 2.5.2
 
