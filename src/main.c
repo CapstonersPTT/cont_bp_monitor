@@ -15,11 +15,6 @@
 #include <zephyr/drivers/gpio.h>
 #include "../drivers/sensor_ppg.h"
 
-#if !DT_NODE_EXISTS(DT_PATH(zephyr_user)) || \
-	!DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
-#error "No suitable devicetree overlay specified"
-#endif
-
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
 	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
@@ -52,7 +47,6 @@ void read_thread(void) {
     int err;
 	//Set up PPG sensor
 	err = ppg_start_config(spi_ppg);
-	//TODO: 
 	//Config num channels
 	err = ppg_config_num_channels(spi_ppg);
 	//Config LED settings and time slots

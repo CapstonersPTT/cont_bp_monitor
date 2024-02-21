@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/drivers/spi.h>
+#include <zephyr/drivers/gpio.h>
 
 int ppg_start_config(const struct spi_dt_spec spi); //Start clock, enter program mode, config GPIOS
 int ppg_config_sampling_freq(const struct spi_dt_spec spi, uint16_t freq);
