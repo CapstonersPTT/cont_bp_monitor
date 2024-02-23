@@ -54,14 +54,18 @@ void read_thread(void) {
 	//Config FIFO queue
 	err = ppg_config_fifo(spi_ppg);
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi_ppg, 200);
+	err = ppg_config_sampling_freq(spi_ppg, 10);
 	//Exit program mode
 	err = ppg_exit_config(spi_ppg);
 
 	//Read from PPG Sensor (probably in a loop)
+	printk("entered while loop %d\n", err);
+	while (err == 0) {
+		err = ppg_read_sensors(spi_ppg, spi_ppg, 20);
+		k_msleep(SENSOR_SLEEP_MS);
+	}
+	printk("err = %d\n", err);
 	while (1) {
-		//ppg_read_sensors(spi_ppg, spi_ppg, 20);
-
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 }
@@ -101,7 +105,7 @@ int main(void)
 
 //Initialize the threads
 K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL, 
-                READ_THREAD_PRIORITY, 0, 0);
+                READ_THREAD_PRIORITY, 0, 0); 
 /*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
                 CALC_THREAD_PRIORITY, 0, 0); */
 /*K_THREAD_DEFINE(bt_thread, STACKSIZE, BLE_thread, NULL, NULL, NULL, 
