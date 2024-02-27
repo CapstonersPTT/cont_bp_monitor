@@ -18,7 +18,7 @@ int ppg_start_config(const struct spi_dt_spec spi) {
     spi_reg = 0x4B;
     spi_rw = 0x1;
     spi_value = 0x1340; 
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -31,7 +31,7 @@ int ppg_start_config(const struct spi_dt_spec spi) {
     spi_reg = 0x10;
     spi_rw = 0x1;
     spi_value = 0x0001;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -49,7 +49,7 @@ int ppg_config_sampling_freq(const struct spi_dt_spec spi, uint16_t freq) {
     spi_reg = 0x12;
     spi_rw = 0x1;
     spi_value = 32000 / (4 * freq); //freq = 32KHz/(reg value * 4)
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
     err = spi_write_dt(&spi, &tx_bufs);
@@ -66,7 +66,7 @@ int ppg_config_num_channels(const struct spi_dt_spec spi) {
     spi_reg = 0x3c;
     spi_rw = 0x1;
     spi_value = 0x31c6;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -83,7 +83,7 @@ int ppg_config_fifo(const struct spi_dt_spec spi) {
     spi_reg = 0x5f;
     spi_rw = 0x1;
     spi_value = 0x0006;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -95,7 +95,7 @@ int ppg_config_fifo(const struct spi_dt_spec spi) {
     spi_reg = 0x06;
     spi_rw = 0x1;
     spi_value = 0x0400;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -107,7 +107,7 @@ int ppg_config_fifo(const struct spi_dt_spec spi) {
     spi_reg = 0x11;
     spi_rw = 0x1;
     spi_value = 0x1005;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -126,7 +126,7 @@ int ppg_config_leds(const struct spi_dt_spec spi) {
     spi_reg = 0x14;
     spi_rw = 0x1;
     spi_value = 0x0545;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -150,7 +150,7 @@ int ppg_exit_config(const struct spi_dt_spec spi) {
     spi_reg = 0x10;
     spi_rw = 0x1;
     spi_value = 0x0002;
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
 	err = spi_write_dt(&spi, &tx_bufs);
@@ -167,8 +167,9 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
     spi_reg = 0x00;
     spi_rw = 0x0;
     tx_buf.len = 1; 
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     err = spi_write_dt(&spi, &tx_bufs);
+    printk("Data sent: 0x%x", tx_bufs.buffers->buf);
     if (err < 0) {
 			printk("SPI Write failed (%d)\n", err);
     }
@@ -182,8 +183,9 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
     spi_reg = 0x60;
     spi_rw = 0x0;
     tx_buf.len = 1; 
-    spi_cmd[0] = spi_reg + (spi_rw << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
     err = spi_write_dt(&spi, &tx_bufs);
+    printk("Data sent: 0x%x", tx_bufs.buffers->buf);
     if (err < 0) {
 			printk("SPI Write failed (%d)\n", err);
     }
