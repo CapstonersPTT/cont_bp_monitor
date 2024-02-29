@@ -28,6 +28,8 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define CALC_THREAD_PRIORITY 2
 #define BLE_THREAD_PRIORITY 3
 
+#define CS_NODE DT_ALIAS(led0)
+
 //Time between sensor reads
 #define SENSOR_SLEEP_MS 100
 
@@ -41,27 +43,29 @@ static const struct adc_dt_spec adc_channels[] = {
 
 static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
 
+static const struct gpio_dt_spec cs_test = GPIO_DT_SPEC_GET(CS_NODE, gpios);
+
 //TODO: define array for holding PPG sensor readings
 
 void read_thread(void) {
     int err;
 	//Set up PPG sensor
-	err = ppg_start_config(spi_ppg);
+	err = ppg_start_config(spi_ppg, cs_test);
 	//Config num channels
-	err = ppg_config_num_channels(spi_ppg);
+	err = ppg_config_num_channels(spi_ppg, cs_test);
 	//Config LED settings and time slots
-	err = ppg_config_leds(spi_ppg);
+	err = ppg_config_leds(spi_ppg, cs_test);
 	//Config FIFO queue
-	err = ppg_config_fifo(spi_ppg);
+	err = ppg_config_fifo(spi_ppg, cs_test);
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi_ppg, 10);
+	err = ppg_config_sampling_freq(spi_ppg, 10, cs_test);
 	//Exit program mode
-	err = ppg_exit_config(spi_ppg);
+	err = ppg_exit_config(spi_ppg, cs_test);
 
 	//Read from PPG Sensor (probably in a loop)
 	printk("entered while loop %d\n", err);
 	while (err == 0) {
-		err = ppg_read_sensors(spi_ppg, spi_ppg, 20);
+		err = ppg_read_sensors(spi_ppg, spi_ppg, 20, cs_test);
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 	printk("err = %d\n", err);
@@ -81,6 +85,12 @@ void calc_thread(void) {
 int main(void)
 {
 	int err;
+	//Configure GPIOS
+	if (!device_is_ready(cs_test.port)) {
+		LOG_ERR("GPIO device is not ready");
+		return 0;
+	}
+	err = gpio_pin_configure_dt(&cs_test, GPIO_OUTPUT_INACTIVE);
 	//Configure ADC channels
 	printk("Configuring ADC channels\n");
 	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {

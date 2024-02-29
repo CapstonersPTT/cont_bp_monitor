@@ -86,11 +86,11 @@
 	pinctrl-0 = <&spi1_default>;
 	pinctrl-1 = <&spi1_sleep>;
 	pinctrl-names = "default", "sleep";
-	clock-frequency = <DT_FREQ_M(8)>;
+	clock-frequency = <DT_FREQ_M(1)>;
 	adpd1801: adpd1801@0 {
 		compatible = "zephyr,adpd1801";
 		reg = <0>;
-		spi-max-frequency = <DT_FREQ_M(10)>;
+		spi-max-frequency = <DT_FREQ_M(1)>;
 		label = "adpd1801";
 	};
 };
@@ -104,5 +104,10 @@
 
 &qspi {
 	status = "disabled";
+};
+
+&led0 {
+    gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
+    label = "CS";
 };
 
