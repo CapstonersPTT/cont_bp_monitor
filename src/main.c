@@ -43,31 +43,33 @@ static const struct adc_dt_spec adc_channels[] = {
 
 static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
 
-static const struct gpio_dt_spec cs_test = GPIO_DT_SPEC_GET(CS_NODE, gpios);
+static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
 //TODO: define array for holding PPG sensor readings
 
 void read_thread(void) {
     int err;
 	//Set up PPG sensor
-	err = ppg_start_config(spi_ppg, cs_test);
+	err = ppg_start_config(spi_ppg, ppg_cs);
 	//Config num channels
-	err = ppg_config_num_channels(spi_ppg, cs_test);
+	err = ppg_config_num_channels(spi_ppg, ppg_cs);
 	//Config LED settings and time slots
-	err = ppg_config_leds(spi_ppg, cs_test);
+	err = ppg_config_leds(spi_ppg, ppg_cs);
 	//Config FIFO queue
-	err = ppg_config_fifo(spi_ppg, cs_test);
+	err = ppg_config_fifo(spi_ppg, ppg_cs);
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi_ppg, 10, cs_test);
-	//Exit program mode
-	err = ppg_exit_config(spi_ppg, cs_test);
+	err = ppg_config_sampling_freq(spi_ppg, 10, ppg_cs);
 
-	//Read from PPG Sensor (probably in a loop)
-	printk("entered while loop %d\n", err);
+	err = ppg_config_gpios(spi_ppg, 0, ppg_cs);
+	//Exit program mode
+	err = ppg_exit_config(spi_ppg, ppg_cs);
+
+	//Read from PPG Sensor
 	while (err == 0) {
-		err = ppg_read_sensors(spi_ppg, spi_ppg, 20, cs_test);
+		err = ppg_read_sensors(spi_ppg, spi_ppg, 20, ppg_cs);
 		k_msleep(SENSOR_SLEEP_MS);
 	}
+	//If an error occurs, break loop
 	printk("err = %d\n", err);
 	while (1) {
 		k_msleep(SENSOR_SLEEP_MS);
@@ -86,11 +88,12 @@ int main(void)
 {
 	int err;
 	//Configure GPIOS
-	if (!device_is_ready(cs_test.port)) {
+	printk("Configuring GPIO pins\n");
+	if (!device_is_ready(ppg_cs.port)) {
 		LOG_ERR("GPIO device is not ready");
 		return 0;
 	}
-	err = gpio_pin_configure_dt(&cs_test, GPIO_OUTPUT_INACTIVE);
+	err = gpio_pin_configure_dt(&ppg_cs, GPIO_OUTPUT_INACTIVE);
 	//Configure ADC channels
 	printk("Configuring ADC channels\n");
 	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
