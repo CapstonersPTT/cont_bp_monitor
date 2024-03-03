@@ -86,11 +86,11 @@
 	pinctrl-0 = <&spi1_default>;
 	pinctrl-1 = <&spi1_sleep>;
 	pinctrl-names = "default", "sleep";
-	clock-frequency = <DT_FREQ_M(1)>;
+	clock-frequency = <DT_FREQ_M(10)>;
 	adpd1801: adpd1801@0 {
 		compatible = "zephyr,adpd1801";
 		reg = <0>;
-		spi-max-frequency = <DT_FREQ_M(1)>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
 		label = "adpd1801";
 	};
 };
