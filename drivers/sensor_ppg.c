@@ -260,38 +260,50 @@ int ppg_software_reset(const struct spi_dt_spec spi, const struct gpio_dt_spec c
 
 int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, uint16_t num_samples, const struct gpio_dt_spec cs) {
     int err = 0;
-    //TODO: add loop to take num_samples samples
-    //check how much data is in queue
-    spi_reg = 0x00;
-    spi_rw = 0x0;
-    tx_buf.len = 1; 
-    spi_cmd[0] = spi_rw + (spi_reg << 1);
-    gpio_pin_set_dt(&cs, 1);
-    err = spi_write_dt(&spi, &tx_bufs);
-    err = spi_read_dt(&spi, &rx_bufs);
-    gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Read failed (%d)\n", err);
-			return err;
-	}
-    printk("Data in FIFO queue: 0x%02x%02x\t\t", spi_rd[0], spi_rd[1]);
+    uint16_t samples_in_queue = 0;
+    uint16_t sample_count = 0;
     
-    //Read from FIFO queue
-    spi_reg = 0x60;
-    spi_rw = 0x0;
-    tx_buf.len = 1; 
-    spi_cmd[0] = spi_rw + (spi_reg << 1);
-    gpio_pin_set_dt(&cs, 1);
-    err = spi_write_dt(&spi, &tx_bufs);
-    err = spi_read_dt(&spi, &rx_bufs);
-    gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Read failed (%d)\n", err);
-			return err;
-	}
-    printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
-    return err;
+    //Read num_samples samples
+    while (sample_count < num_samples) {
+        //check how much data is in queue
+        spi_reg = 0x00;
+        spi_rw = 0x0;
+        tx_buf.len = 1; 
+        spi_cmd[0] = spi_rw + (spi_reg << 1);
+        gpio_pin_set_dt(&cs, 1);
+        err = spi_write_dt(&spi, &tx_bufs);
+        err = spi_read_dt(&spi, &rx_bufs);
+        gpio_pin_set_dt(&cs, 0);
+        if (err < 0) {
+                printk("SPI Read failed (%d)\n", err);
+                return err;
+        }
+        samples_in_queue = (spi_rd[0] / 2);
+        printk("Num Samples in FIFO queue: 0x%d\n", num_samples);
 
-    //TODO: add logic for reading from queue until its empty
-    
+        //If number of samples in queue is more than we need, only read enough samples to return num_samples
+        if (samples_in_queue > (num_samples - sample_count)) {
+            samples_in_queue = (num_samples - sample_count);
+        }
+        
+        for (int i = 0; i < samples_in_queue; i++) {
+            //Read one sample from FIFO queue
+            spi_reg = 0x60;
+            spi_rw = 0x0;
+            tx_buf.len = 1; 
+            spi_cmd[0] = spi_rw + (spi_reg << 1);
+            gpio_pin_set_dt(&cs, 1);
+            err = spi_write_dt(&spi, &tx_bufs);
+            err = spi_read_dt(&spi, &rx_bufs);
+            gpio_pin_set_dt(&cs, 0);
+            if (err < 0) {
+                    printk("SPI Read failed (%d)\n", err);
+                    return err;
+            }
+            sample_count++;
+            printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
+        }
+        k_msleep(1);
+    }
+    return err; 
 }
