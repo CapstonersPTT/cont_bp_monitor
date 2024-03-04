@@ -1,3 +1,11 @@
+/************************************************************************************
+ * 	
+ * 	@file     main.c
+ *  @author   Mario Lanzilotta
+ * 	@brief    Continuous blood pressure monitor code for nrf52840dk
+ *  
+************************************************************************************/
+
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -61,8 +69,8 @@ void read_thread(void) {
 	err = ppg_config_fifo(spi_ppg, ppg_cs);
 	//Config sampling freq
 	err = ppg_config_sampling_freq(spi_ppg, 10, ppg_cs);
-
-	err = ppg_config_gpios(spi_ppg, 0, ppg_cs);
+	//Config GPIO outputs (mostly for debugging)
+	err = ppg_config_gpios(spi_ppg, ppg_cs);
 	//Exit program mode
 	err = ppg_exit_config(spi_ppg, ppg_cs);
 
