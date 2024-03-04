@@ -99,7 +99,19 @@
 };
 
 &spi2 {
+	compatible = "nordic,nrf-spi";
 	status = "okay";
+	cs-gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&spi2_default>;
+	pinctrl-1 = <&spi2_sleep>;
+	pinctrl-names = "default", "sleep";
+	clock-frequency = <DT_FREQ_M(10)>;
+	adpd1801_2: adpd1801@0 {
+		compatible = "zephyr,adpd1801";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+		label = "adpd1801_2";
+	};
 };
 
 &qspi {
@@ -108,6 +120,15 @@
 
 &led0 {
     gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
-    label = "CS";
+    label = "PPG CS";
 };
 
+&led1 {
+    gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
+    label = "PPG2 CS";
+};
+
+
+&i2c0 {
+	status = "disabled";
+};
