@@ -31,7 +31,7 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define CS_NODE DT_ALIAS(led0)
 
 //Time between sensor reads
-#define SENSOR_SLEEP_MS 100
+#define SENSOR_SLEEP_MS 93
 
 //Data of ADC io-channels specified in devicetree
 static const struct adc_dt_spec adc_channels[] = {
@@ -49,6 +49,8 @@ static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
 void read_thread(void) {
     int err;
+	//Reset PPG sensor
+	err = ppg_software_reset(spi_ppg, ppg_cs);
 	//Set up PPG sensor
 	err = ppg_start_config(spi_ppg, ppg_cs);
 	//Config num channels

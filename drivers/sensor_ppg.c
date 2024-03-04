@@ -178,7 +178,7 @@ int ppg_config_gpios(const struct spi_dt_spec spi, uint16_t gpios, const struct 
     //Config Interrupts
     spi_reg = 0x01;
     spi_rw = 0x1;
-    spi_value = 0x019F;
+    spi_value = 0x00FF;
     spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
@@ -239,9 +239,28 @@ int ppg_exit_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     return err;
 }
 
+int ppg_software_reset(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
+    int err = 0;
+    tx_buf.len = 3; 
+    spi_reg = 0x0F;
+    spi_rw = 0x1;
+    spi_value = 0x0001;
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
+    spi_cmd[1] = (uint8_t) (spi_value >> 8);
+    spi_cmd[2] = (uint8_t) spi_value;
+    gpio_pin_set_dt(&cs, 1);
+	err = spi_write_dt(&spi, &tx_bufs);
+    gpio_pin_set_dt(&cs, 0);
+    if (err < 0) {
+			printk("SPI Write failed (%d)\n", err);
+			return err;
+	}
+    return err;
+}
+
 int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, uint16_t num_samples, const struct gpio_dt_spec cs) {
     int err = 0;
-    
+    //TODO: add loop to take num_samples samples
     //check how much data is in queue
     spi_reg = 0x00;
     spi_rw = 0x0;
@@ -255,10 +274,10 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
 			printk("SPI Read failed (%d)\n", err);
 			return err;
 	}
-    printk("Data in FIFO queue: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
+    printk("Data in FIFO queue: 0x%02x%02x\t\t", spi_rd[0], spi_rd[1]);
     
     //Read from FIFO queue
-    spi_reg = 0x64;
+    spi_reg = 0x60;
     spi_rw = 0x0;
     tx_buf.len = 1; 
     spi_cmd[0] = spi_rw + (spi_reg << 1);
@@ -272,5 +291,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
 	}
     printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
     return err;
+
+    //TODO: add logic for reading from queue until its empty
     
 }
