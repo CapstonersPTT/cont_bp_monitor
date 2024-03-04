@@ -258,11 +258,30 @@ int ppg_software_reset(const struct spi_dt_spec spi, const struct gpio_dt_spec c
     return err;
 }
 
+int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
+    int err = 0;
+    tx_buf.len = 3; 
+    spi_reg = 0x00;
+    spi_rw = 0x1;
+    spi_value = 0x801F;
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
+    spi_cmd[1] = (uint8_t) (spi_value >> 8);
+    spi_cmd[2] = (uint8_t) spi_value;
+    gpio_pin_set_dt(&cs, 1);
+    err = spi_write_dt(&spi, &tx_bufs);
+    gpio_pin_set_dt(&cs, 0);
+    if (err < 0) {
+            printk("SPI Write failed (%d)\n", err);
+            return err;
+    }
+    return err;
+}
+
 int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, uint16_t num_samples, const struct gpio_dt_spec cs) {
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
-    
+
     //Read num_samples samples
     while (sample_count < num_samples) {
         //check how much data is in queue
