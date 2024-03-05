@@ -23,9 +23,6 @@
 #include <zephyr/drivers/gpio.h>
 #include "../drivers/sensor_ppg.h"
 
-#define DT_SPEC_AND_COMMA(node_id, prop, idx) \
-	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
-
 //Initialize Logger
 LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 
@@ -44,6 +41,7 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB
 
 static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
+static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801_2), SPI_PPG_OP, 0);
 
 static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
@@ -95,12 +93,19 @@ void read_thread(void) {
 	//Read from PPG Sensor
 	while (err == 0) {
 		err = ppg_clear_fifo(spi_ppg, ppg_cs);
+		if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    	}
 		k_msleep(10);
 		err = ppg_read_sensors(spi_ppg, spi_ppg, 20, ppg_cs);
+		if (err < 0) {
+            LOG_ERR("SPI Read failed (%d)\n", err);
+    	}
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 	//If an error occurs, break loop
 	LOG_ERR("err = %d\n", err);
+
 	while (1) {
 		k_msleep(SENSOR_SLEEP_MS);
 	}
@@ -124,9 +129,14 @@ int main(void)
 		return 0;
 	}
 	err = gpio_pin_configure_dt(&ppg_cs, GPIO_OUTPUT_INACTIVE);
-	
+
+	//Configure SPI
 	LOG_INF("Configuring SPI\n");
     if (!spi_is_ready_dt(&spi_ppg)) {
+        LOG_ERR("SPI device not ready, aborting\n");
+		return 0;
+	}
+	if (!spi_is_ready_dt(&spi_ppg2)) {
         LOG_ERR("SPI device not ready, aborting\n");
 		return 0;
 	}
