@@ -36,16 +36,10 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define CALC_THREAD_PRIORITY 2
 #define BLE_THREAD_PRIORITY 3
 
-#define CS_NODE DT_ALIAS(led0)
+#define CS_NODE DT_ALIAS(ppgcs)
 
 //Time between sensor reads
 #define SENSOR_SLEEP_MS 93
-
-//Data of ADC io-channels specified in devicetree
-static const struct adc_dt_spec adc_channels[] = {
-	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
-			     DT_SPEC_AND_COMMA)
-};
 
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB
 
@@ -104,21 +98,7 @@ int main(void)
 		return 0;
 	}
 	err = gpio_pin_configure_dt(&ppg_cs, GPIO_OUTPUT_INACTIVE);
-	//Configure ADC channels
-	printk("Configuring ADC channels\n");
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-		if (!adc_is_ready_dt(&adc_channels[i])) {
-			printk("ADC controller device %s not ready\n", adc_channels[i].dev->name);
-			return 0;
-		}
-
-		err = adc_channel_setup_dt(&adc_channels[i]);
-		if (err < 0) {
-			printk("Could not setup channel #%d (%d)\n", i, err);
-			return 0;
-		}
-	}
-
+	
 	printk("Configuring SPI\n");
     if (!spi_is_ready_dt(&spi_ppg)) {
         printk("SPI device not ready, aborting\n");

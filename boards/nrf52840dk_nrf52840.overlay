@@ -4,63 +4,6 @@
  * Copyright (c) 2022 Nordic Semiconductor ASA
  */
 
-
-/ {
-	zephyr,user {
-		io-channels = <&adc 0>, <&adc 1>;
-	};
-};
-
-&adc {
-	#address-cells = <1>;
-	#size-cells = <0>;
-
-	channel@0 {
-		reg = <0>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN0>; /* P0.02 */
-		zephyr,resolution = <12>;
-	};
-
-	channel@1 {
-		reg = <1>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN1>; /* P0.03 */
-		zephyr,resolution = <12>;
-	};
-
-	channel@2 {
-		reg = <2>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_VDD>;
-		zephyr,resolution = <14>;
-		zephyr,oversampling = <8>;
-	};
-
-	channel@7 {
-		reg = <7>;
-		zephyr,gain = "ADC_GAIN_1_5";
-		zephyr,reference = "ADC_REF_VDD_1_4";
-		zephyr,vref-mv = <750>;
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN6>; /* P0.30 */
-		zephyr,input-negative = <NRF_SAADC_AIN7>; /* P0.31 */
-		zephyr,resolution = <12>;
-	};
-
-	status = "okay";
-};
-
-&arduino_adc {
-	io-channel-map = <0 &adc 1>, <1 &adc 2>, <2 &adc 4>, <3 &adc 5>, <4 &adc 6>, <5 &adc 7>;
-};
-
 &spi0 {
 	compatible = "nordic,nrf-spi";
 	status = "okay";
@@ -77,6 +20,7 @@
 		label = "adpd1801";
 	};
 };
+
 &spi1 {
 	status = "disabled";
 };
@@ -106,12 +50,23 @@
 	status = "disabled";
 };
 
-
 / {
-	zephyr,user {
-		ppg_cs-gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
-		ppg2_cs-gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
-		label = "PPG CS";
+	cs_pins {
+		compatible = "gpio-leds";
+		ppgcs: ppg_cs {
+			gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
+			label = "PPG CS";
+		};
+		ppgcs2: ppg_cs2 {
+			gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
+			label = "PPG CS2";
+		};
+	};
+
+	aliases {
+		ppgcs = &ppgcs;
+		ppgcs2 = &ppgcs2;
 	};
 };
+
 
