@@ -22,10 +22,6 @@
 };
 
 &spi1 {
-	status = "disabled";
-};
-
-&spi2 {
 	compatible = "nordic,nrf-spi";
 	status = "okay";
 	cs-gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
@@ -40,6 +36,14 @@
 		spi-max-frequency = <DT_FREQ_M(10)>;
 		label = "adpd1801_2";
 	};
+};
+
+&spi2 {
+	status = "disabled";
+};
+
+&spi3 {
+	status = "disabled";
 };
 
 &qspi {
