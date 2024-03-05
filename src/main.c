@@ -53,28 +53,54 @@ void read_thread(void) {
     int err;
 	//Reset PPG sensor
 	err = ppg_software_reset(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Set up PPG sensor
 	err = ppg_start_config(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Config num channels
 	err = ppg_config_num_channels(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Config LED settings and time slots
 	err = ppg_config_leds(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Config FIFO queue
 	err = ppg_config_fifo(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Config sampling freq
 	err = ppg_config_sampling_freq(spi_ppg, 10, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Config GPIO outputs (mostly for debugging)
 	err = ppg_config_gpios(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Exit program mode
 	err = ppg_exit_config(spi_ppg, ppg_cs);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 
 	//Read from PPG Sensor
 	while (err == 0) {
+		err = ppg_clear_fifo(spi_ppg, ppg_cs);
+		k_msleep(10);
 		err = ppg_read_sensors(spi_ppg, spi_ppg, 20, ppg_cs);
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 	//If an error occurs, break loop
-	printk("err = %d\n", err);
+	LOG_ERR("err = %d\n", err);
 	while (1) {
 		k_msleep(SENSOR_SLEEP_MS);
 	}
@@ -92,16 +118,16 @@ int main(void)
 {
 	int err;
 	//Configure GPIOS
-	printk("Configuring GPIO pins\n");
+	LOG_INF("Configuring GPIO pins\n");
 	if (!device_is_ready(ppg_cs.port)) {
 		LOG_ERR("GPIO device is not ready");
 		return 0;
 	}
 	err = gpio_pin_configure_dt(&ppg_cs, GPIO_OUTPUT_INACTIVE);
 	
-	printk("Configuring SPI\n");
+	LOG_INF("Configuring SPI\n");
     if (!spi_is_ready_dt(&spi_ppg)) {
-        printk("SPI device not ready, aborting\n");
+        LOG_ERR("SPI device not ready, aborting\n");
 		return 0;
 	}
 }

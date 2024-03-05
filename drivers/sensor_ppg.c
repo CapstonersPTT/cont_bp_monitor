@@ -32,10 +32,7 @@ int ppg_start_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
+
     //enable clock
     spi_reg = 0x4B;
     spi_rw = 0x1;
@@ -46,11 +43,7 @@ int ppg_start_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    printk("Data sent: 0x%x 0x%x 0x%x\n", spi_cmd[0], spi_cmd[1],spi_cmd[2]);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-    }
+
     return err;
 }
 
@@ -76,10 +69,6 @@ int ppg_config_sampling_freq(const struct spi_dt_spec spi, uint16_t freq, const 
     gpio_pin_set_dt(&cs, 1);
     err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     return err;
 }
 
@@ -103,10 +92,6 @@ int ppg_config_num_channels(const struct spi_dt_spec spi, const struct gpio_dt_s
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     return err;
 }
 
@@ -131,10 +116,6 @@ int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     */
     //Set max FIFO length (in words)
     spi_reg = 0x06;
@@ -146,10 +127,7 @@ int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
+
     //Determines how data is written to FIFO
     //Also enables time slot A
     spi_reg = 0x11;
@@ -161,10 +139,6 @@ int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     
     return err;
 
@@ -191,10 +165,6 @@ int ppg_config_leds(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
 
     spi_reg = 0x54;
     spi_rw = 0x1;
@@ -205,10 +175,6 @@ int ppg_config_leds(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
 
     return err;
 }
@@ -234,10 +200,7 @@ int ppg_config_gpios(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
+
     //Config GPIO pins
     spi_reg = 0x02;
     spi_rw = 0x1;
@@ -248,10 +211,6 @@ int ppg_config_gpios(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
 
     spi_reg = 0x0B;
     spi_rw = 0x1;
@@ -262,10 +221,6 @@ int ppg_config_gpios(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     return err;
 }
 
@@ -288,10 +243,6 @@ int ppg_exit_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     return err;
 }
 
@@ -315,10 +266,6 @@ int ppg_software_reset(const struct spi_dt_spec spi, const struct gpio_dt_spec c
     gpio_pin_set_dt(&cs, 1);
 	err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-			printk("SPI Write failed (%d)\n", err);
-			return err;
-	}
     return err;
 }
 
@@ -342,16 +289,12 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
     gpio_pin_set_dt(&cs, 1);
     err = spi_write_dt(&spi, &tx_bufs);
     gpio_pin_set_dt(&cs, 0);
-    if (err < 0) {
-            printk("SPI Write failed (%d)\n", err);
-            return err;
-    }
     return err;
 }
 
 /************************************************************************************
  *   
- * @brief Enters program mode and starts the sample clock
+ * @brief Reads data samples from both PPG sensors
  * @param spi devicetree spec of the first ppg sensor
  * @param spi2 devicetree spec of the second ppg sensor
  * @param num_samples number of samples to take from each sensor (size of array to fill)
