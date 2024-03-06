@@ -112,10 +112,9 @@ void read_thread(void) {
 }
 
 void calc_thread(void) {
-	//Put Algorithm Here
-	//TODO: Add method of storing data from PPG sensors to be accessed here
+	//TODO: Put Algorithm Here
 	while (1) {
-			k_msleep(60);
+			k_msleep(1000);
 	}
 }
 
