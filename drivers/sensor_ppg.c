@@ -302,10 +302,11 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
  * @returns spi error code
  *  
 ************************************************************************************/
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, uint16_t num_samples, const struct gpio_dt_spec cs) {
+int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, uint16_t num_samples, const struct gpio_dt_spec cs,  double proximal[], double distal[]) {
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
+    uint16_t num_samples = sizeof(proximal);
 
     //Read num_samples samples
     while (sample_count < num_samples) {
@@ -316,12 +317,14 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         spi_cmd[0] = spi_rw + (spi_reg << 1);
         gpio_pin_set_dt(&cs, 1);
         err = spi_write_dt(&spi, &tx_bufs);
-        err = spi_read_dt(&spi, &rx_bufs);
-        gpio_pin_set_dt(&cs, 0);
         if (err < 0) {
-                printk("SPI Read failed (%d)\n", err);
                 return err;
         }
+        err = spi_read_dt(&spi, &rx_bufs);
+        if (err < 0) {
+                return err;
+        }
+        gpio_pin_set_dt(&cs, 0);
         samples_in_queue = (spi_rd[0] / 2);
         printk("Num Samples in FIFO queue: 0x%d\n", num_samples);
 
@@ -338,12 +341,15 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
             spi_cmd[0] = spi_rw + (spi_reg << 1);
             gpio_pin_set_dt(&cs, 1);
             err = spi_write_dt(&spi, &tx_bufs);
-            err = spi_read_dt(&spi, &rx_bufs);
-            gpio_pin_set_dt(&cs, 0);
             if (err < 0) {
-                    printk("SPI Read failed (%d)\n", err);
-                    return err;
+                return err;
             }
+            err = spi_read_dt(&spi, &rx_bufs);
+            if (err < 0) {
+                return err;
+            }
+            gpio_pin_set_dt(&cs, 0);
+            proximal[sample_count] = spi_rd[1] + (spi_rd[0] << 8);
             sample_count++;
             printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
         }
