@@ -25,7 +25,6 @@
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
 #define CALC_THREAD_PRIORITY 2
-#define BLE_THREAD_PRIORITY 3
 
 //Time between sensor reads
 #define SENSOR_SLEEP_MS 100
