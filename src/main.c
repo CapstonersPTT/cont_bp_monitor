@@ -29,7 +29,7 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 //Stacksize for threads
 #define STACKSIZE 2048
 
-#define ARRAY_SIZE 100
+#define PPG_ARRAY_SIZE 100
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
 #define CALC_THREAD_PRIORITY 2
@@ -46,8 +46,8 @@ static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801
 
 static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
-static const double proximal[ARRAY_SIZE];
-static const double distal[ARRAY_SIZE];
+static double proximal[PPG_ARRAY_SIZE];
+static double distal[PPG_ARRAY_SIZE];
 
 //TODO: define array for holding PPG sensor readings
 
