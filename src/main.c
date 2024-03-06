@@ -31,7 +31,6 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
 #define CALC_THREAD_PRIORITY 2
-#define BLE_THREAD_PRIORITY 3
 
 #define CS_NODE DT_ALIAS(ppgcs)
 
@@ -146,5 +145,3 @@ K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL,
                 READ_THREAD_PRIORITY, 0, 0); 
 /*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
                 CALC_THREAD_PRIORITY, 0, 0); */
-/*K_THREAD_DEFINE(bt_thread, STACKSIZE, BLE_thread, NULL, NULL, NULL, 
-                BLE_THREAD_PRIORITY, 0, 0); */
