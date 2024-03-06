@@ -302,7 +302,7 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
  * @returns spi error code
  *  
 ************************************************************************************/
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, uint16_t num_samples, const struct gpio_dt_spec cs,  double proximal[], double distal[]) {
+int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs,  double proximal[], double distal[]) {
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
