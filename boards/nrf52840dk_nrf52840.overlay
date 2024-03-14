@@ -88,6 +88,10 @@
 		ppgcs = &ppgcs;
 		ppgcs2 = &ppgcs2;
 	};
+	
+};
+&spi1 {
+	status = "disabled";
 };
 
 
