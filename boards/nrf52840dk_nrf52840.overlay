@@ -4,76 +4,18 @@
  * Copyright (c) 2022 Nordic Semiconductor ASA
  */
 
-
-/ {
-	zephyr,user {
-		io-channels = <&adc 0>, <&adc 1>;
-	};
-};
-
-&adc {
-	#address-cells = <1>;
-	#size-cells = <0>;
-
-	channel@0 {
-		reg = <0>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN0>; /* P0.02 */
-		zephyr,resolution = <12>;
-	};
-
-	channel@1 {
-		reg = <1>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN1>; /* P0.03 */
-		zephyr,resolution = <12>;
-	};
-
-	channel@2 {
-		reg = <2>;
-		zephyr,gain = "ADC_GAIN_1_6";
-		zephyr,reference = "ADC_REF_INTERNAL";
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_VDD>;
-		zephyr,resolution = <14>;
-		zephyr,oversampling = <8>;
-	};
-
-	channel@7 {
-		reg = <7>;
-		zephyr,gain = "ADC_GAIN_1_5";
-		zephyr,reference = "ADC_REF_VDD_1_4";
-		zephyr,vref-mv = <750>;
-		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
-		zephyr,input-positive = <NRF_SAADC_AIN6>; /* P0.30 */
-		zephyr,input-negative = <NRF_SAADC_AIN7>; /* P0.31 */
-		zephyr,resolution = <12>;
-	};
-
-	status = "okay";
-};
-
-&arduino_adc {
-	io-channel-map = <0 &adc 1>, <1 &adc 2>, <2 &adc 4>, <3 &adc 5>, <4 &adc 6>, <5 &adc 7>;
-};
-
-&pinctrl {
-	spi0_default: spi0_default {
+ &pinctrl {
+	spi1_default: spi1_default {
 		group1 {
-			psels = <NRF_PSEL(SPIM_SCK, 0, 27)>,
-				<NRF_PSEL(SPIM_MOSI, 0, 26)>,
+			psels = <NRF_PSEL(SPIM_SCK, 0, 31)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 30)>,
 				<NRF_PSEL(SPIM_MISO, 0, 29)>;
 		};
 	};
-
-	spi0_sleep: spi0_sleep {
+	spi1_sleep: spi1_sleep {
 		group1 {
-			psels = <NRF_PSEL(SPIM_SCK, 0, 27)>,
-				<NRF_PSEL(SPIM_MOSI, 0, 26)>,
+			psels = <NRF_PSEL(SPIM_SCK, 0, 31)>,
+				<NRF_PSEL(SPIM_MOSI, 0, 30)>,
 				<NRF_PSEL(SPIM_MISO, 0, 29)>;
 		};
 	};
@@ -82,19 +24,70 @@
 &spi0 {
 	compatible = "nordic,nrf-spi";
 	status = "okay";
-	cs-gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;
+	cs-gpios = <&gpio0 27 GPIO_ACTIVE_LOW>;
 	pinctrl-0 = <&spi1_default>;
 	pinctrl-1 = <&spi1_sleep>;
 	pinctrl-names = "default", "sleep";
-	clock-frequency = <DT_FREQ_M(8)>;
+	max-frequency = <DT_FREQ_M(10)>;
+	clock-frequency = <DT_FREQ_M(10)>;
 	adpd1801: adpd1801@0 {
-		compatible = "spi-device";
+		compatible = "zephyr,adpd1801";
 		reg = <0>;
 		spi-max-frequency = <DT_FREQ_M(10)>;
 		label = "adpd1801";
 	};
-	
 };
+
 &spi1 {
+	compatible = "nordic,nrf-spi";
+	status = "okay";
+	cs-gpios = <&gpio0 23 GPIO_ACTIVE_LOW>;
+	pinctrl-0 = <&spi2_default>;
+	pinctrl-1 = <&spi2_sleep>;
+	pinctrl-names = "default", "sleep";
+	max-frequency = <DT_FREQ_M(10)>;
+	clock-frequency = <DT_FREQ_M(10)>;
+	adpd1801_2: adpd1801@0 {
+		compatible = "zephyr,adpd1801";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(10)>;
+		label = "adpd1801_2";
+	};
+};
+
+&spi2 {
 	status = "disabled";
 };
+
+&spi3 {
+	status = "disabled";
+};
+
+&qspi {
+	status = "disabled";
+};
+
+&i2c0 {
+	status = "disabled";
+};
+
+/ {
+	cs_pins {
+		compatible = "gpio-leds";
+		ppgcs: ppg_cs {
+			gpios = <&gpio0 28 GPIO_ACTIVE_LOW>;
+			label = "PPG CS";
+		};
+		ppgcs2: ppg_cs2 {
+			gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+			label = "PPG CS2";
+		};
+	};
+
+	aliases {
+		ppgcs = &ppgcs;
+		ppgcs2 = &ppgcs2;
+	};
+	
+};
+

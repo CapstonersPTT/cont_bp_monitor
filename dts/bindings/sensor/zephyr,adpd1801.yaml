@@ -1,0 +1,6 @@
+description: My spi device binding for ADPD1801
+
+compatible: "zephyr,adpd1801"
+
+include: spi-device.yaml
+  
