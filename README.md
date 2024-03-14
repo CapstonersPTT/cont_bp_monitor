@@ -12,7 +12,9 @@ Continuous Blood Pressure Monitor firmware for nrf52840 DK. The firmware handles
 ### Project Status
 In progess
 
-Testing status: Tested on nrf52840dk
+This branch contains code implementing BLE communication with a central device (i.e. phone). 
+
+Testing status: not tested
 
 ### Getting Started
 nRF Connect SDK Toolchain version: 2.5.2
