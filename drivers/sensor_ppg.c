@@ -1,3 +1,10 @@
+/************************************************************************************
+ * 	
+ * 	@file     sensor_ppg.c
+ *  @author   Mario Lanzilotta
+ * 	@brief    PPG sensor driver
+ *  
+************************************************************************************/
 #include "sensor_ppg.h"
 
 static uint8_t spi_cmd[3] = {0};
@@ -36,7 +43,7 @@ int ppg_start_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
     //enable clock
     spi_reg = 0x4B;
     spi_rw = 0x1;
-    spi_value = 0x2692; //10010111 0001 0011 1001 0010
+    spi_value = 0x2692;
     spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
@@ -306,7 +313,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
-    uint16_t num_samples = sizeof(proximal);
+    uint16_t num_samples = 100;//sizeof(proximal);
 
     //Read num_samples samples
     while (sample_count < num_samples) {
@@ -326,7 +333,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         }
         gpio_pin_set_dt(&cs, 0);
         samples_in_queue = (spi_rd[0] / 2);
-        printk("Num Samples in FIFO queue: 0x%d\n", num_samples);
+        printk("# Samples in FIFO queue: %d (%d needed)\n", samples_in_queue, (num_samples - sample_count));
 
         //If number of samples in queue is more than we need, only read enough samples to return num_samples
         if (samples_in_queue > (num_samples - sample_count)) {
@@ -353,7 +360,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
             sample_count++;
             printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
         }
-        k_msleep(1);
+        k_msleep(10);
     }
     return err; 
 }

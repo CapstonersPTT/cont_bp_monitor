@@ -37,9 +37,9 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define CS_NODE DT_ALIAS(ppgcs)
 
 //Time between sensor reads
-#define SENSOR_SLEEP_MS 93
+#define SENSOR_SLEEP_MS 2000
 
-#define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB
+#define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
 
 static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
 static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801_2), SPI_PPG_OP, 0);
@@ -49,9 +49,8 @@ static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 static double proximal[PPG_ARRAY_SIZE];
 static double distal[PPG_ARRAY_SIZE];
 
-//TODO: define array for holding PPG sensor readings
-
 void read_thread(void) {
+	LOG_INF("Entering read_thread\n");
     int err;
 	//Reset PPG sensor
 	err = ppg_software_reset(spi_ppg, ppg_cs);
@@ -93,9 +92,10 @@ void read_thread(void) {
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-
+	LOG_INF("Starting read loop\n");
 	//Read from PPG Sensor
 	while (err == 0) {
+		//clear queue before reading values for this cycle
 		err = ppg_clear_fifo(spi_ppg, ppg_cs);
 		if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
