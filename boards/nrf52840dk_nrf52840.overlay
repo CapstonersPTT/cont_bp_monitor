@@ -90,8 +90,4 @@
 	};
 	
 };
-&spi1 {
-	status = "disabled";
-};
-
 
