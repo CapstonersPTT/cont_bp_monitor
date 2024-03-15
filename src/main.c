@@ -21,7 +21,16 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
+
 #include "../drivers/sensor_ppg.h"
+#include "bpm.h"
+#include "../lib/cross_correlate.h"
+#include "../lib/highest_correlation.h"
+
+#include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/bluetooth/gatt.h>
+#include <zephyr/settings/settings.h>
 
 //Initialize Logger
 LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
@@ -48,6 +57,77 @@ static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
 static double proximal[PPG_ARRAY_SIZE];
 static double distal[PPG_ARRAY_SIZE];
+
+static const struct bt_data ad[] = {
+	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
+		      BT_UUID_16_ENCODE(BT_UUID_BPS_VAL)),
+};
+
+void mtu_updated(struct bt_conn *conn, uint16_t tx, uint16_t rx)
+{
+	printk("Updated MTU: TX: %d RX: %d bytes\n", tx, rx);
+}
+
+static struct bt_gatt_cb gatt_callbacks = {
+	.att_mtu_updated = mtu_updated
+};
+
+static void bt_ready(void)
+{
+	int err;
+
+	printk("Bluetooth initialized\n");
+
+	if (IS_ENABLED(CONFIG_SETTINGS)) {
+		settings_load();
+	}
+
+	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
+	if (err) {
+		printk("Advertising failed to start (err %d)\n", err);
+		return;
+	}
+
+	printk("Advertising successfully started\n");
+}
+
+static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	printk("Passkey for %s: %06u\n", addr, passkey);
+}
+
+static void auth_cancel(struct bt_conn *conn)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	printk("Pairing cancelled: %s\n", addr);
+}
+
+static struct bt_conn_auth_cb auth_cb_display = {
+	.passkey_display = auth_passkey_display,
+	.passkey_entry = NULL,
+	.cancel = auth_cancel,
+};
+
+static void bps_notify(void)
+{
+	static uint8_t heartrate = 90U;
+
+	/* Heartrate measurements simulation */
+	heartrate++;
+	if (heartrate == 160U) {
+		heartrate = 90U;
+	}
+
+	bt_bps_notify(heartrate);
+}
 
 void read_thread(void) {
 	LOG_INF("Entering read_thread\n");
@@ -78,7 +158,7 @@ void read_thread(void) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi_ppg, 10, ppg_cs);
+	err = ppg_config_sampling_freq(spi_ppg, 100, ppg_cs);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
@@ -95,6 +175,7 @@ void read_thread(void) {
 	LOG_INF("Starting read loop\n");
 	//Read from PPG Sensor
 	while (err == 0) {
+		/*
 		//clear queue before reading values for this cycle
 		err = ppg_clear_fifo(spi_ppg, ppg_cs);
 		if (err < 0) {
@@ -104,13 +185,15 @@ void read_thread(void) {
 		err = ppg_read_sensors(spi_ppg, spi_ppg, ppg_cs, proximal, distal);
 		if (err < 0) {
             LOG_ERR("SPI Read failed (%d)\n", err);
-    	}
+    	}*/
+		bps_notify();
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 	//If an error occurs, break loop
 	LOG_ERR("err = %d\n", err);
 
 	while (1) {
+		bps_notify();
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 }
@@ -145,6 +228,16 @@ int main(void)
 	}
 
 	//TODO: start BLE advertising here
+	err = bt_enable(NULL);
+	if (err) {
+		LOG_ERR("Bluetooth init failed (err %d)\n", err);
+		return 0;
+	}
+
+	bt_ready();
+
+	bt_gatt_cb_register(&gatt_callbacks);
+	bt_conn_auth_cb_register(&auth_cb_display);
 }
 
 //Initialize the threads
@@ -152,3 +245,5 @@ K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL,
                 READ_THREAD_PRIORITY, 0, 0); 
 /*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
                 CALC_THREAD_PRIORITY, 0, 0); */
+
+

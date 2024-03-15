@@ -313,7 +313,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
-    uint16_t num_samples = 100;//sizeof(proximal);
+    uint16_t num_samples = 100; //sizeof(proximal);
 
     //Read num_samples samples
     while (sample_count < num_samples) {

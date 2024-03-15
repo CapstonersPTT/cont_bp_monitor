@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-void bp_init(void);
-void bp_notify(void);
+int bp_init(void);
+int bt_bps_notify(uint16_t pressure);
 
 #ifdef __cplusplus
 }
