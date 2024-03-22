@@ -29,7 +29,7 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 //Stacksize for threads
 #define STACKSIZE 2048
 
-#define PPG_ARRAY_SIZE 100
+#define PPG_ARRAY_SIZE 1000
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
 #define CALC_THREAD_PRIORITY 2
@@ -37,7 +37,7 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define CS_NODE DT_ALIAS(ppgcs)
 
 //Time between sensor reads
-#define SENSOR_SLEEP_MS 2000
+#define SENSOR_SLEEP_MS 10000
 
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
 
@@ -46,8 +46,8 @@ static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801
 
 static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
-static double proximal[PPG_ARRAY_SIZE];
-static double distal[PPG_ARRAY_SIZE];
+static uint16_t proximal[PPG_ARRAY_SIZE];
+static uint16_t distal[PPG_ARRAY_SIZE];
 
 void read_thread(void) {
 	LOG_INF("Entering read_thread\n");
@@ -78,7 +78,7 @@ void read_thread(void) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi_ppg, 10, ppg_cs);
+	err = ppg_config_sampling_freq(spi_ppg, 1000, ppg_cs);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
@@ -87,6 +87,8 @@ void read_thread(void) {
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
+	err = ppg_set_LED_drive(spi_ppg, ppg_cs, 0);
+	err = ppg_set_slot_A(spi_ppg, ppg_cs, 0x03, 0x20, 0x01, 0x14);
 	//Exit program mode
 	err = ppg_exit_config(spi_ppg, ppg_cs);
 	if (err < 0) {
@@ -105,6 +107,12 @@ void read_thread(void) {
 		if (err < 0) {
             LOG_ERR("SPI Read failed (%d)\n", err);
     	}
+
+		for (int i = 0; i < PPG_ARRAY_SIZE; i++) {
+			printf("%d,", proximal[i]);
+		}
+		printf("\n\n");
+
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 	//If an error occurs, break loop

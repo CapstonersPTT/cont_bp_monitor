@@ -161,6 +161,7 @@ int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) 
 ************************************************************************************/
 int ppg_config_leds(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
     int err = 0;
+    //TODO: add option to adjust timeslot time, pulses, averaging
 
     //Set which LEDs pulse
     spi_reg = 0x14;
@@ -309,11 +310,11 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
  * @returns spi error code
  *  
 ************************************************************************************/
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs,  double proximal[], double distal[]) {
+int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, uint16_t *proximal, uint16_t *distal) {
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
-    uint16_t num_samples = 100;//sizeof(proximal);
+    uint16_t num_samples = 1000;//sizeof(proximal);
 
     //Read num_samples samples
     while (sample_count < num_samples) {
@@ -333,7 +334,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         }
         gpio_pin_set_dt(&cs, 0);
         samples_in_queue = (spi_rd[0] / 2);
-        printk("# Samples in FIFO queue: %d (%d needed)\n", samples_in_queue, (num_samples - sample_count));
+        //printk("# Samples in FIFO queue: %d (%d needed)\n", samples_in_queue, (num_samples - sample_count));
 
         //If number of samples in queue is more than we need, only read enough samples to return num_samples
         if (samples_in_queue > (num_samples - sample_count)) {
@@ -358,9 +359,66 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
             gpio_pin_set_dt(&cs, 0);
             proximal[sample_count] = spi_rd[1] + (spi_rd[0] << 8);
             sample_count++;
-            printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
+            //printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
         }
-        k_msleep(10);
+        k_msleep(1);
     }
     return err; 
+}
+
+int ppg_set_LED_drive(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint16_t drive) {
+    int err = 0;
+    tx_buf.len = 3; 
+    spi_reg = 0x23;
+    spi_rw = 0x1;
+    spi_value = 0x1000 + (drive << 13);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
+    spi_cmd[1] = (uint8_t) (spi_value >> 8);
+    spi_cmd[2] = (uint8_t) spi_value;
+    gpio_pin_set_dt(&cs, 1);
+    err = spi_write_dt(&spi, &tx_bufs);
+    gpio_pin_set_dt(&cs, 0);
+    return err;
+}
+
+int ppg_set_TIA_INT_gain(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint16_t tia_gain, uint16_t int_gain) {
+    int err = 0;
+    tx_buf.len = 3; 
+    spi_reg = 0x42;
+    spi_rw = 0x1;
+    spi_value = 0x3900 + tia_gain + (int_gain << 7);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
+    spi_cmd[1] = (uint8_t) (spi_value >> 8);
+    spi_cmd[2] = (uint8_t) spi_value;
+    gpio_pin_set_dt(&cs, 1);
+    err = spi_write_dt(&spi, &tx_bufs);
+    gpio_pin_set_dt(&cs, 0);
+    return err;
+}
+
+int ppg_set_slot_A(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint8_t width, uint8_t offset, uint8_t pulses, uint8_t period) {
+    int err = 0;
+
+    tx_buf.len = 3; 
+    spi_reg = 0x30;
+    spi_rw = 0x1;
+    spi_value = offset + ((width & 0x0F) << 8);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
+    spi_cmd[1] = (uint8_t) (spi_value >> 8);
+    spi_cmd[2] = (uint8_t) spi_value;
+    gpio_pin_set_dt(&cs, 1);
+    err = spi_write_dt(&spi, &tx_bufs);
+    gpio_pin_set_dt(&cs, 0);
+
+    spi_reg = 0x31;
+    spi_rw = 0x1;
+    spi_value = period + (pulses << 8);
+    spi_cmd[0] = spi_rw + (spi_reg << 1);
+    spi_cmd[1] = (uint8_t) (spi_value >> 8);
+    spi_cmd[2] = (uint8_t) spi_value;
+    gpio_pin_set_dt(&cs, 1);
+    err = spi_write_dt(&spi, &tx_bufs);
+    gpio_pin_set_dt(&cs, 0);
+
+    return err;
 }
