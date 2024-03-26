@@ -126,7 +126,7 @@ static void bps_notify(void)
 		heartrate = 90U;
 	}
 
-	bt_bps_notify(heartrate);
+	bt_bps_notify(heartrate, heartrate);
 }
 
 void read_thread(void) {
