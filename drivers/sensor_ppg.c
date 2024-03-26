@@ -112,22 +112,10 @@ int ppg_config_num_channels(const struct spi_dt_spec spi, const struct gpio_dt_s
 ************************************************************************************/
 int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) { 
     int err = 0;
-    //Enable Data hold for slot A and B
-    /*
-    spi_reg = 0x5f;
-    spi_rw = 0x1;
-    spi_value = 0x0006;
-    spi_cmd[0] = spi_rw + (spi_reg << 1);
-    spi_cmd[1] = (uint8_t) (spi_value >> 8);
-    spi_cmd[2] = (uint8_t) spi_value;
-    gpio_pin_set_dt(&cs, 1);
-	err = spi_write_dt(&spi, &tx_bufs);
-    gpio_pin_set_dt(&cs, 0);
-    */
     //Set max FIFO length (in words)
     spi_reg = 0x06;
     spi_rw = 0x1;
-    spi_value = 0x0800;
+    spi_value = 0x2000;
     spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
@@ -222,7 +210,7 @@ int ppg_config_gpios(const struct spi_dt_spec spi, const struct gpio_dt_spec cs)
 
     spi_reg = 0x0B;
     spi_rw = 0x1;
-    spi_value = 0x0513;
+    spi_value = 0x0501;
     spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
@@ -305,17 +293,18 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
  * @brief Reads data samples from both PPG sensors
  * @param spi devicetree spec of the first ppg sensor
  * @param spi2 devicetree spec of the second ppg sensor
- * @param num_samples number of samples to take from each sensor (size of array to fill)
  * @param cs devicetree spec of the chip select pin 
+ * @param proximal array of size num_samples to store proximal readings
+ * @param distal array of size num_samples to store distal readings
+ * @param num_samples number of samples to take from each sensor (size of array to fill)
  * @returns spi error code
  *  
 ************************************************************************************/
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, uint16_t *proximal, uint16_t *distal) {
+int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, uint32_t *proximal, uint32_t *distal, uint16_t num_samples) {
     int err = 0;
     uint16_t samples_in_queue = 0;
     uint16_t sample_count = 0;
-    uint16_t num_samples = 1000;//sizeof(proximal);
-
+    /*
     //Read num_samples samples
     while (sample_count < num_samples) {
         //check how much data is in queue
@@ -334,19 +323,18 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         }
         gpio_pin_set_dt(&cs, 0);
         samples_in_queue = (spi_rd[0] / 2);
-        //printk("# Samples in FIFO queue: %d (%d needed)\n", samples_in_queue, (num_samples - sample_count));
+        //printf("# Samples in FIFO queue: %d (%d needed)\n", samples_in_queue, (num_samples - sample_count));
 
         //If number of samples in queue is more than we need, only read enough samples to return num_samples
         if (samples_in_queue > (num_samples - sample_count)) {
             samples_in_queue = (num_samples - sample_count);
         }
-        
+        spi_reg = 0x60;
+        spi_rw = 0x0;
+        tx_buf.len = 1; 
+        spi_cmd[0] = spi_rw + (spi_reg << 1);
         for (int i = 0; i < samples_in_queue; i++) {
             //Read one sample from FIFO queue
-            spi_reg = 0x60;
-            spi_rw = 0x0;
-            tx_buf.len = 1; 
-            spi_cmd[0] = spi_rw + (spi_reg << 1);
             gpio_pin_set_dt(&cs, 1);
             err = spi_write_dt(&spi, &tx_bufs);
             if (err < 0) {
@@ -359,19 +347,60 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
             gpio_pin_set_dt(&cs, 0);
             proximal[sample_count] = spi_rd[1] + (spi_rd[0] << 8);
             sample_count++;
-            //printk("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
+            //printf("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
         }
         k_msleep(1);
     }
+    */
+    
+    for (int i = 0; i < num_samples; i++) {
+        //Read one sample from register
+        spi_reg = 0x70;
+        spi_rw = 0x0;
+        tx_buf.len = 1; 
+        spi_cmd[0] = spi_rw + (spi_reg << 1);
+        gpio_pin_set_dt(&cs, 1);
+        err = spi_write_dt(&spi, &tx_bufs);
+        if (err < 0) {
+            return err;
+        }
+        err = spi_read_dt(&spi, &rx_bufs);
+        if (err < 0) {
+            return err;
+        }
+        gpio_pin_set_dt(&cs, 0);
+        proximal[sample_count] = spi_rd[1] + (spi_rd[0] << 8);
+
+        spi_reg = 0x74;
+        spi_rw = 0x0;
+        tx_buf.len = 1; 
+        spi_cmd[0] = spi_rw + (spi_reg << 1);
+        gpio_pin_set_dt(&cs, 1);
+        err = spi_write_dt(&spi, &tx_bufs);
+        if (err < 0) {
+            return err;
+        }
+        err = spi_read_dt(&spi, &rx_bufs);
+        if (err < 0) {
+            return err;
+        }
+        gpio_pin_set_dt(&cs, 0);
+        proximal[sample_count] += (spi_rd[1] << 16) + (spi_rd[0] << 24);
+
+        sample_count++;
+        //printf("Data from SPI read: 0x%02x%02x\n", spi_rd[0], spi_rd[1]);
+        k_msleep(1);
+    }
+
     return err; 
 }
 
-int ppg_set_LED_drive(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint16_t drive) {
+int ppg_set_LED_drive(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint8_t drive, uint8_t coarse) {
     int err = 0;
     tx_buf.len = 3; 
     spi_reg = 0x23;
     spi_rw = 0x1;
-    spi_value = 0x1000 + (drive << 13);
+    spi_value = 0x1000 + (drive << 13) + coarse;
     spi_cmd[0] = spi_rw + (spi_reg << 1);
     spi_cmd[1] = (uint8_t) (spi_value >> 8);
     spi_cmd[2] = (uint8_t) spi_value;
@@ -396,6 +425,18 @@ int ppg_set_TIA_INT_gain(const struct spi_dt_spec spi, const struct gpio_dt_spec
     return err;
 }
 
+/************************************************************************************
+ *   
+ * @brief Sets parameters for time slot A
+ * @param spi devicetree spec of the ppg sensor
+ * @param cs devicetree spec of the chip select pin 
+ * @param width LED pulse width (us)
+ * @param offset time between start of time slot and first pulse (us)
+ * @param pulses number of LED pulses per time slot
+ * @param period time between LED pulses (us)
+ * @returns spi error code
+ *  
+************************************************************************************/
 int ppg_set_slot_A(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint8_t width, uint8_t offset, uint8_t pulses, uint8_t period) {
     int err = 0;
 

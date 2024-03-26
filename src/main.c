@@ -29,7 +29,7 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 //Stacksize for threads
 #define STACKSIZE 2048
 
-#define PPG_ARRAY_SIZE 1000
+#define PPG_ARRAY_SIZE 2000
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
 #define CALC_THREAD_PRIORITY 2
@@ -46,8 +46,8 @@ static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801
 
 static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
 
-static uint16_t proximal[PPG_ARRAY_SIZE];
-static uint16_t distal[PPG_ARRAY_SIZE];
+static uint32_t proximal[PPG_ARRAY_SIZE];
+static uint32_t distal[PPG_ARRAY_SIZE];
 
 void read_thread(void) {
 	LOG_INF("Entering read_thread\n");
@@ -87,8 +87,15 @@ void read_thread(void) {
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_set_LED_drive(spi_ppg, ppg_cs, 0);
-	err = ppg_set_slot_A(spi_ppg, ppg_cs, 0x03, 0x20, 0x01, 0x14);
+	//Extra configs for sensor tuning
+	err = ppg_set_LED_drive(spi_ppg, ppg_cs, 0, 3);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
+	err = ppg_set_slot_A(spi_ppg, ppg_cs, 0x04, 0x20, 0x02, 0x14);
+	if (err < 0) {
+            LOG_ERR("SPI Write failed (%d)\n", err);
+    }
 	//Exit program mode
 	err = ppg_exit_config(spi_ppg, ppg_cs);
 	if (err < 0) {
@@ -103,7 +110,7 @@ void read_thread(void) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     	}
 		k_msleep(10);
-		err = ppg_read_sensors(spi_ppg, spi_ppg, ppg_cs, proximal, distal);
+		err = ppg_read_sensors(spi_ppg, spi_ppg, ppg_cs, proximal, distal , PPG_ARRAY_SIZE);
 		if (err < 0) {
             LOG_ERR("SPI Read failed (%d)\n", err);
     	}
