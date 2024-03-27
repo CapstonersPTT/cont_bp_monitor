@@ -166,7 +166,10 @@ void read_thread(void) {
 			printf("%d,", proximal[i]);
 		}
 		printf("\n\n");
-
+		for (int i = 0; i < PPG_ARRAY_SIZE; i++) {
+			printf("%d,", distal[i]);
+		}
+		printf("\n");
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 

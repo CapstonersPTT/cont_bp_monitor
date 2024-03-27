@@ -304,7 +304,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
     int err = 0;
     uint16_t sample_count = 0;
 
-    for (int sample_count; sample_count < num_samples; sample_count++) {
+    for (sample_count = 0; sample_count < num_samples; sample_count++) {
         //Read one sample from proximal
         spi_reg = 0x70;
         spi_rw = 0x0;
