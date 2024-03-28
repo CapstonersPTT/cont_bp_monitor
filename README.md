@@ -12,7 +12,7 @@ Continuous Blood Pressure Monitor firmware for nrf52840 DK. The firmware handles
 ### Project Status
 In progess
 
-This branch contains code implementing BLE communication with a central device (i.e. phone). 
+TODO: port algorithm into firmware, continue testing and tuning sensors, add calibration for LED drive
 
 Testing status: not tested
 
