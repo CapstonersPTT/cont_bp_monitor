@@ -21,7 +21,16 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/drivers/gpio.h>
+
 #include "../drivers/sensor_ppg.h"
+#include "bpm.h"
+#include "../lib/cross_correlate.h"
+#include "../lib/highest_correlation.h"
+
+#include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/bluetooth/gatt.h>
+#include <zephyr/settings/settings.h>
 
 //Initialize Logger
 LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
@@ -45,7 +54,6 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define SENSOR_SLEEP_MS 5000
 
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
-#define SPI_PPG2_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
 
 static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
 static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd18012), SPI_PPG_OP, 0);
@@ -55,6 +63,64 @@ static const struct gpio_dt_spec ppg_cs2 = GPIO_DT_SPEC_GET(CS_NODE2, gpios);
 
 static uint32_t proximal[PPG_ARRAY_SIZE];
 static uint32_t distal[PPG_ARRAY_SIZE];
+
+static const struct bt_data ad[] = {
+	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	BT_DATA_BYTES(BT_DATA_UUID16_ALL,
+		      BT_UUID_16_ENCODE(BT_UUID_BPS_VAL)),
+};
+
+void mtu_updated(struct bt_conn *conn, uint16_t tx, uint16_t rx)
+{
+	printk("Updated MTU: TX: %d RX: %d bytes\n", tx, rx);
+}
+
+static struct bt_gatt_cb gatt_callbacks = {
+	.att_mtu_updated = mtu_updated
+};
+
+static void bt_ready(void)
+{
+	int err;
+
+	printk("Bluetooth initialized\n");
+
+	if (IS_ENABLED(CONFIG_SETTINGS)) {
+		settings_load();
+	}
+
+	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
+	if (err) {
+		printk("Advertising failed to start (err %d)\n", err);
+		return;
+	}
+
+	printk("Advertising successfully started\n");
+}
+
+static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	printk("Passkey for %s: %06u\n", addr, passkey);
+}
+
+static void auth_cancel(struct bt_conn *conn)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	printk("Pairing cancelled: %s\n", addr);
+}
+
+static struct bt_conn_auth_cb auth_cb_display = {
+	.passkey_display = auth_passkey_display,
+	.passkey_entry = NULL,
+	.cancel = auth_cancel,
+};
 
 void read_thread(void) {
 	LOG_INF("Entering read_thread\n");
@@ -181,7 +247,8 @@ void read_thread(void) {
 void calc_thread(void) {
 	//TODO: Put Algorithm Here
 	while (1) {
-		k_yield();
+		bt_bps_notify(0, 1);
+		k_msleep(SENSOR_SLEEP_MS);
 	}
 }
 
@@ -213,10 +280,22 @@ int main(void)
 	}
 
 	//TODO: start BLE advertising here
+	err = bt_enable(NULL);
+	if (err) {
+		LOG_ERR("Bluetooth init failed (err %d)\n", err);
+		return 0;
+	}
+
+	bt_ready();
+
+	bt_gatt_cb_register(&gatt_callbacks);
+	bt_conn_auth_cb_register(&auth_cb_display);
 }
 
 //Initialize the threads
 K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL, 
                 READ_THREAD_PRIORITY, 0, 0); 
-/*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
-                CALC_THREAD_PRIORITY, 0, 0); */
+K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
+                CALC_THREAD_PRIORITY, 0, 0);
+
+
