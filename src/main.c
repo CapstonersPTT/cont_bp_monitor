@@ -54,7 +54,6 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define SENSOR_SLEEP_MS 5000
 
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
-#define SPI_PPG2_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
 
 static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
 static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd18012), SPI_PPG_OP, 0);
@@ -122,19 +121,6 @@ static struct bt_conn_auth_cb auth_cb_display = {
 	.passkey_entry = NULL,
 	.cancel = auth_cancel,
 };
-
-static void bps_notify(void)
-{
-	static uint8_t heartrate = 90U;
-
-	/* Heartrate measurements simulation */
-	heartrate++;
-	if (heartrate == 160U) {
-		heartrate = 90U;
-	}
-
-	bt_bps_notify(heartrate, heartrate);
-}
 
 void read_thread(void) {
 	LOG_INF("Entering read_thread\n");
@@ -237,7 +223,6 @@ void read_thread(void) {
 		if (err < 0) {
             LOG_ERR("SPI Read failed (%d)\n", err);
     	}
-		bps_notify();
 
 		for (int i = 0; i < PPG_ARRAY_SIZE; i++) {
 			printf("%d,", proximal[i]);
@@ -255,7 +240,6 @@ void read_thread(void) {
 	LOG_ERR("err = %d\n", err);
 
 	while (1) {
-		bps_notify();
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 }
@@ -263,7 +247,8 @@ void read_thread(void) {
 void calc_thread(void) {
 	//TODO: Put Algorithm Here
 	while (1) {
-		k_yield();
+		bt_bps_notify(0, 1);
+		k_msleep(SENSOR_SLEEP_MS);
 	}
 }
 
@@ -310,7 +295,7 @@ int main(void)
 //Initialize the threads
 K_THREAD_DEFINE(rd_thread, STACKSIZE, read_thread, NULL, NULL, NULL, 
                 READ_THREAD_PRIORITY, 0, 0); 
-/*K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
-                CALC_THREAD_PRIORITY, 0, 0); */
+K_THREAD_DEFINE(cal_thread, STACKSIZE, calc_thread, NULL, NULL, NULL, 
+                CALC_THREAD_PRIORITY, 0, 0);
 
 

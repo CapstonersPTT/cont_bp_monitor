@@ -21,7 +21,7 @@
 LOG_MODULE_REGISTER(BLE_bp, LOG_LEVEL_DBG);
 
 static uint8_t bps_blsc;
-static uint8_t bp[2];;
+static uint16_t bp[2];;
 
 static void bp_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value) {
 	ARG_UNUSED(attr);
