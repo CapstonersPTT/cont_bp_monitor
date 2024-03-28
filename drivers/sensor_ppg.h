@@ -24,7 +24,7 @@ int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_config_leds(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_config_gpios(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_exit_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, const struct gpio_dt_spec cs2, uint32_t *proximal, uint32_t *distal, uint16_t num_samples);
+int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec spi_p, const struct gpio_dt_spec cs, const struct gpio_dt_spec cs2, uint32_t *distal, uint32_t *proximal, uint16_t num_samples);
 int ppg_software_reset(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 

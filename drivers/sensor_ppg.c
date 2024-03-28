@@ -300,7 +300,7 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
  * @returns spi error code
  *  
 ************************************************************************************/
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, const struct gpio_dt_spec cs2, uint32_t *proximal, uint32_t *distal, uint16_t num_samples) {
+int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec spi_p, const struct gpio_dt_spec cs, const struct gpio_dt_spec cs2, uint32_t *distal, uint32_t *proximal, uint16_t num_samples) {
     int err = 0;
     uint16_t sample_count = 0;
 
@@ -311,11 +311,11 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
         gpio_pin_set_dt(&cs, 1);
-        err = spi_write_dt(&spi, &tx_bufs);
+        err = spi_write_dt(&spi_p, &tx_bufs);
         if (err < 0) {
             return err;
         }
-        err = spi_read_dt(&spi, &rx_bufs);
+        err = spi_read_dt(&spi_p, &rx_bufs);
         if (err < 0) {
             return err;
         }
@@ -327,11 +327,11 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
         gpio_pin_set_dt(&cs, 1);
-        err = spi_write_dt(&spi, &tx_bufs);
+        err = spi_write_dt(&spi_p, &tx_bufs);
         if (err < 0) {
             return err;
         }
-        err = spi_read_dt(&spi, &rx_bufs);
+        err = spi_read_dt(&spi_p, &rx_bufs);
         if (err < 0) {
             return err;
         }
@@ -344,11 +344,11 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
         gpio_pin_set_dt(&cs2, 1);
-        err = spi_write_dt(&spi2, &tx_bufs);
+        err = spi_write_dt(&spi_d, &tx_bufs);
         if (err < 0) {
             return err;
         }
-        err = spi_read_dt(&spi2, &rx_bufs);
+        err = spi_read_dt(&spi_d, &rx_bufs);
         if (err < 0) {
             return err;
         }
@@ -360,11 +360,11 @@ int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
         gpio_pin_set_dt(&cs2, 1);
-        err = spi_write_dt(&spi2, &tx_bufs);
+        err = spi_write_dt(&spi_d, &tx_bufs);
         if (err < 0) {
             return err;
         }
-        err = spi_read_dt(&spi2, &rx_bufs);
+        err = spi_read_dt(&spi_d, &rx_bufs);
         if (err < 0) {
             return err;
         }

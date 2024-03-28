@@ -55,11 +55,11 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
 
-static const struct spi_dt_spec spi_ppg = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
-static const struct spi_dt_spec spi_ppg2 = SPI_DT_SPEC_GET(DT_NODELABEL(adpd18012), SPI_PPG_OP, 0);
+static const struct spi_dt_spec spi_ppg_dist = SPI_DT_SPEC_GET(DT_NODELABEL(adpd1801), SPI_PPG_OP, 0);
+static const struct spi_dt_spec spi_ppg_prox = SPI_DT_SPEC_GET(DT_NODELABEL(adpd18012), SPI_PPG_OP, 0);
 
-static const struct gpio_dt_spec ppg_cs = GPIO_DT_SPEC_GET(CS_NODE, gpios);
-static const struct gpio_dt_spec ppg_cs2 = GPIO_DT_SPEC_GET(CS_NODE2, gpios);
+static const struct gpio_dt_spec ppg_csd = GPIO_DT_SPEC_GET(CS_NODE, gpios);
+static const struct gpio_dt_spec ppg_csp = GPIO_DT_SPEC_GET(CS_NODE2, gpios);
 
 static uint32_t proximal[PPG_ARRAY_SIZE];
 static uint32_t distal[PPG_ARRAY_SIZE];
@@ -127,91 +127,91 @@ void read_thread(void) {
 	int err;
 
 	//Reset PPG sensor
-	err = ppg_software_reset(spi_ppg, ppg_cs);
+	err = ppg_software_reset(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_software_reset(spi_ppg2, ppg_cs2);
+	err = ppg_software_reset(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Set up PPG sensor
-	err = ppg_start_config(spi_ppg, ppg_cs);
+	err = ppg_start_config(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_start_config(spi_ppg2, ppg_cs2);
+	err = ppg_start_config(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Config num channels
-	err = ppg_config_num_channels(spi_ppg, ppg_cs);
+	err = ppg_config_num_channels(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_config_num_channels(spi_ppg2, ppg_cs2);
+	err = ppg_config_num_channels(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Config LED settings and time slots
-	err = ppg_config_leds(spi_ppg, ppg_cs);
+	err = ppg_config_leds(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_config_leds(spi_ppg2, ppg_cs2);
+	err = ppg_config_leds(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Config FIFO queue
-	err = ppg_config_fifo(spi_ppg, ppg_cs);
+	err = ppg_config_fifo(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_config_fifo(spi_ppg2, ppg_cs2);
+	err = ppg_config_fifo(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Config sampling freq
-	err = ppg_config_sampling_freq(spi_ppg, PPG_SAMPLE_RATE, ppg_cs);
+	err = ppg_config_sampling_freq(spi_ppg_dist, PPG_SAMPLE_RATE, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_config_sampling_freq(spi_ppg2, PPG_SAMPLE_RATE, ppg_cs2);
+	err = ppg_config_sampling_freq(spi_ppg_prox, PPG_SAMPLE_RATE, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Config GPIO outputs (mostly for debugging)
-	err = ppg_config_gpios(spi_ppg, ppg_cs);
+	err = ppg_config_gpios(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_config_gpios(spi_ppg2, ppg_cs2);
+	err = ppg_config_gpios(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Extra configs for sensor tuning
-	err = ppg_set_LED_drive(spi_ppg, ppg_cs, 0, 3);
+	err = ppg_set_LED_drive(spi_ppg_dist, ppg_csd, 0, 3);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_set_LED_drive(spi_ppg2, ppg_cs2, 0, 3);
+	err = ppg_set_LED_drive(spi_ppg_prox, ppg_csp, 0, 3);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
-	err = ppg_set_slot_A(spi_ppg, ppg_cs, 0x04, 0x20, 0x02, 0x14);
+	err = ppg_set_slot_A(spi_ppg_dist, ppg_csd, 0x04, 0x20, 0x02, 0x14);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_set_slot_A(spi_ppg2, ppg_cs2, 0x04, 0x20, 0x02, 0x14);
+	err = ppg_set_slot_A(spi_ppg_prox, ppg_csp, 0x04, 0x20, 0x02, 0x14);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Exit program mode
-	err = ppg_exit_config(spi_ppg, ppg_cs);
+	err = ppg_exit_config(spi_ppg_dist, ppg_csd);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
     }
-	err = ppg_exit_config(spi_ppg2, ppg_cs2);
+	err = ppg_exit_config(spi_ppg_prox, ppg_csp);
 	if (err < 0) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
@@ -219,7 +219,7 @@ void read_thread(void) {
 	LOG_INF("Starting read loop\n");
 	//Read from PPG Sensor
 	while (err == 0) {
-		err = ppg_read_sensors(spi_ppg, spi_ppg2, ppg_cs, ppg_cs2, proximal, distal , PPG_ARRAY_SIZE);
+		err = ppg_read_sensors(spi_ppg_dist, spi_ppg_prox, ppg_csd, ppg_csp, proximal, distal , PPG_ARRAY_SIZE);
 		if (err < 0) {
             LOG_ERR("SPI Read failed (%d)\n", err);
     	}
@@ -257,29 +257,29 @@ int main(void)
 	int err;
 	//Configure GPIOS
 	LOG_INF("Configuring GPIO pins\n");
-	if (!device_is_ready(ppg_cs.port)) {
+	if (!device_is_ready(ppg_csd.port)) {
 		LOG_ERR("GPIO device is not ready");
 		return 0;
 	}
-	err = gpio_pin_configure_dt(&ppg_cs, GPIO_OUTPUT_INACTIVE);
-	if (!device_is_ready(ppg_cs2.port)) {
+	err = gpio_pin_configure_dt(&ppg_csd, GPIO_OUTPUT_INACTIVE);
+	if (!device_is_ready(ppg_csp.port)) {
 		LOG_ERR("GPIO device is not ready");
 		return 0;
 	}
-	err = gpio_pin_configure_dt(&ppg_cs2, GPIO_OUTPUT_INACTIVE);
+	err = gpio_pin_configure_dt(&ppg_csp, GPIO_OUTPUT_INACTIVE);
 
 	//Configure SPI
 	LOG_INF("Configuring SPI\n");
-    if (!spi_is_ready_dt(&spi_ppg)) {
+    if (!spi_is_ready_dt(&spi_ppg_dist)) {
         LOG_ERR("SPI device not ready, aborting\n");
 		return 0;
 	}
-	if (!spi_is_ready_dt(&spi_ppg2)) {
+	if (!spi_is_ready_dt(&spi_ppg_prox)) {
         LOG_ERR("SPI device not ready, aborting\n");
 		return 0;
 	}
 
-	//TODO: start BLE advertising here
+	//Start BLE advertising
 	err = bt_enable(NULL);
 	if (err) {
 		LOG_ERR("Bluetooth init failed (err %d)\n", err);
@@ -287,7 +287,6 @@ int main(void)
 	}
 
 	bt_ready();
-
 	bt_gatt_cb_register(&gatt_callbacks);
 	bt_conn_auth_cb_register(&auth_cb_display);
 }
