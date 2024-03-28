@@ -24,8 +24,12 @@ int ppg_config_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_config_leds(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_config_gpios(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_exit_config(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
-int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, double proximal[], double distal[]);
+int ppg_read_sensors(const struct spi_dt_spec spi, const struct spi_dt_spec spi2, const struct gpio_dt_spec cs, const struct gpio_dt_spec cs2, uint32_t *proximal, uint32_t *distal, uint16_t num_samples);
 int ppg_software_reset(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
 int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs);
+
+int ppg_set_LED_drive(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint8_t drive, uint8_t coarse);
+int ppg_set_TIA_INT_gain(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint16_t tia_gain, uint16_t int_gain);
+int ppg_set_slot_A(const struct spi_dt_spec spi, const struct gpio_dt_spec cs, uint8_t width, uint8_t offset, uint8_t pulses, uint8_t period);
 
 #endif
