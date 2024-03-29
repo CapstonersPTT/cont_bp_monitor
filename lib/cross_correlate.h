@@ -4,10 +4,10 @@
 #include <stdbool.h>
 
 void cross_correlate(
-    double early_array[],
-    double late_array[],
+    uint32_t early_array[],
+    uint32_t late_array[],
     double return_array[],
-    int size,
+    uint16_t size,
     bool should_log_result);
 
 #endif

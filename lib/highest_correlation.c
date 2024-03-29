@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <math.h>
 #include "highest_correlation.h"
+#include <zephyr/logging/log.h>
+
+//Initialize Logger
+LOG_MODULE_REGISTER(hc, LOG_LEVEL_DBG);
 
 int max_index;
 double max_element;
@@ -15,7 +19,7 @@ double max_element;
  */
 int highest_correlation(
     double coefficients[],
-    int size,
+    uint16_t size,
     bool should_log_max_value,
     bool should_log_max_index)
 {
@@ -36,12 +40,12 @@ int highest_correlation(
   /** optionally log the value at the max */
   if (should_log_max_value)
   {
-    printf("\nThis is the Max_Coefficient: %f", max_element);
+    LOG_DBG("\nThis is the Max_Coefficient: %f", max_element);
   }
 
   if (should_log_max_index)
   {
-    printf("\nThis is the Max_Index: %i", max_index - size);
+    LOG_DBG("\nThis is the Max_Index: %i", max_index - size);
   }
 
   /** return with zero index correction */

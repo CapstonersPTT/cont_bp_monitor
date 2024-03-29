@@ -42,6 +42,8 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define PPG_ARRAY_SIZE 2000
 //Sampling rate of PPG sensors (in Hz)
 #define PPG_SAMPLE_RATE 1000
+//Time between sensor read cycles
+#define SENSOR_SLEEP_MS 5000
 
 //Thread priorities
 #define READ_THREAD_PRIORITY 1
@@ -49,9 +51,6 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 
 #define CS_NODE DT_ALIAS(ppgcs)
 #define CS_NODE2 DT_ALIAS(ppgcs2)
-
-//Time between sensor read cycles
-#define SENSOR_SLEEP_MS 5000
 
 #define SPI_PPG_OP SPI_OP_MODE_MASTER | SPI_MODE_CPOL | SPI_MODE_CPHA | SPI_WORD_SET(8) | SPI_LINES_SINGLE | SPI_TRANSFER_MSB 
 
@@ -63,6 +62,7 @@ static const struct gpio_dt_spec ppg_csp = GPIO_DT_SPEC_GET(CS_NODE2, gpios);
 
 static uint32_t proximal[PPG_ARRAY_SIZE];
 static uint32_t distal[PPG_ARRAY_SIZE];
+static double coefficients[PPG_ARRAY_SIZE * 2];
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -190,6 +190,7 @@ void read_thread(void) {
             LOG_ERR("SPI2 Write failed (%d)\n", err);
     }
 	//Extra configs for sensor tuning
+	//TODO: add calibration loop for LED drive
 	err = ppg_set_LED_drive(spi_ppg_dist, ppg_csd, 0, 3);
 	if (err < 0) {
             LOG_ERR("SPI Write failed (%d)\n", err);
@@ -245,9 +246,22 @@ void read_thread(void) {
 }
 
 void calc_thread(void) {
-	//TODO: Put Algorithm Here
+	//TODO: Finish Algorithm
+	uint16_t samples_delayed;
+	double ptt;
 	while (1) {
-		bt_bps_notify(0, 1);
+		//Cross correlate the proximal and distal data
+		cross_correlate(proximal, distal, coefficients, PPG_ARRAY_SIZE, false);
+
+		//find how many samples later the pulse wave arrived at distal location
+		samples_delayed = highest_correlation(coefficients, PPG_ARRAY_SIZE, true, true);
+
+		//calculate the ptt based on the sample rate and peak location
+		ptt = (double)samples_delayed / PPG_SAMPLE_RATE;
+
+		LOG_INF("\n\nPTT: %f\n", ptt);
+
+		bt_bps_notify(samples_delayed, 1);
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 }

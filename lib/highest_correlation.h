@@ -5,7 +5,7 @@
 
 int highest_correlation(
     double coefficients[],
-    int size,
+    uint16_t size,
     bool should_log_max_value,
     bool should_log_max_index);
 
