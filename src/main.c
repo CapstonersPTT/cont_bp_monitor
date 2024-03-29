@@ -224,7 +224,7 @@ void read_thread(void) {
 		if (err < 0) {
             LOG_ERR("SPI Read failed (%d)\n", err);
     	}
-
+		/*
 		for (int i = 0; i < PPG_ARRAY_SIZE; i++) {
 			printf("%d,", proximal[i]);
 		}
@@ -232,7 +232,7 @@ void read_thread(void) {
 		for (int i = 0; i < PPG_ARRAY_SIZE; i++) {
 			printf("%d,", distal[i]);
 		}
-		printf("\n\n");
+		printf("\n\n");*/
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 
@@ -248,13 +248,31 @@ void read_thread(void) {
 void calc_thread(void) {
 	//TODO: Finish Algorithm
 	uint16_t samples_delayed;
+	uint32_t min_p, min_d;
 	double ptt;
 	while (1) {
+		//Process raw signal
+		//TODO: add better signal processing lol
+		min_p = proximal[0];
+		min_d = distal[0];
+		for (int i = 1; i < PPG_ARRAY_SIZE; i++) {
+			if (proximal[i] < min_p){
+				min_p = proximal[i];
+			}
+			if (distal[i] < min_d){
+				min_d = distal[i];
+			}
+		}
+		for (int i = 1; i < PPG_ARRAY_SIZE; i++) {
+			proximal[i] = proximal[i] - min_p;
+			distal[i] = distal[i] - min_d;
+		}
+
 		//Cross correlate the proximal and distal data
 		cross_correlate(proximal, distal, coefficients, PPG_ARRAY_SIZE, false);
 
 		//find how many samples later the pulse wave arrived at distal location
-		samples_delayed = highest_correlation(coefficients, PPG_ARRAY_SIZE, true, true);
+		samples_delayed = highest_correlation(coefficients, PPG_ARRAY_SIZE, false, false);
 
 		//calculate the ptt based on the sample rate and peak location
 		ptt = (double)samples_delayed / PPG_SAMPLE_RATE;
@@ -266,8 +284,8 @@ void calc_thread(void) {
 	}
 }
 
-int main(void)
-{
+int main(void) {
+
 	int err;
 	//Configure GPIOS
 	LOG_INF("Configuring GPIO pins\n");
@@ -293,13 +311,13 @@ int main(void)
 		return 0;
 	}
 
-	//Start BLE advertising
+	//Enable BLE
 	err = bt_enable(NULL);
 	if (err) {
 		LOG_ERR("Bluetooth init failed (err %d)\n", err);
 		return 0;
 	}
-
+	//Start BLE advertising
 	bt_ready();
 	bt_gatt_cb_register(&gatt_callbacks);
 	bt_conn_auth_cb_register(&auth_cb_display);
