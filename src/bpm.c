@@ -70,7 +70,7 @@ int bp_init(void) {
 }
 
 int bt_bps_notify(uint16_t sys, uint16_t dia) {	
-	int err;
+	int err = 0;
 
 	bp[0] = sys;
 	bp[1] = dia;
