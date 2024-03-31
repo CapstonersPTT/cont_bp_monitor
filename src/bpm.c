@@ -1,6 +1,10 @@
-/** @file
- *  @brief bp Service sample
- */
+/************************************************************************************
+ * 	
+ * 	@file     bpm.c
+ *  @author   Mario Lanzilotta
+ * 	@brief    BLE blood pressure service
+ *  
+************************************************************************************/
 
 #include <zephyr/types.h>
 #include <stddef.h>
