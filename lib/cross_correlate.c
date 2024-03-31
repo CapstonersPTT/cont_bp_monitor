@@ -1,38 +1,36 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
-#include "cross_correlate.h"
 #include <zephyr/logging/log.h>
 
 //Initialize Logger
 LOG_MODULE_REGISTER(cc, LOG_LEVEL_DBG);
 
-int i, j, max_delay, coefficient_index, delay;
-double mean_early, mean_late, standard_deviation_1, standard_deviation_2, numerator, denominator, correlation_coefficient;
+int i, j, max_delay, correlation_index, delay, sum_early, sum_late;
+float mean_early, mean_late, standard_deviation_1, standard_deviation_2, numerator, denominator, correlation_coefficient, max_correlation;
 
 /**
  * @brief Cross correlate the early_array with the late_array
  * @param early_array The array that would be from the proximal sensor
  * @param late_array The array that would be from the distal sensor
- * @param return_array The array that will be filled with the correlation coefficients
  * @param size The size of the smaller of the 2 arrays
- * @param should_log_result Whether or not to log the sxy, result, and delay
- * @return void because the return_array is passed by reference
+ * @param max_reasonable_ptt The maximum reasonable pulse transit time
+ * @return max_index
  */
-void cross_correlate(
-    uint32_t early_array[],
-    uint32_t late_array[],
-    double return_array[],
-    uint16_t size,
-    bool should_log_result)
+int cross_correlate(
+    int early_array[],
+    int late_array[],
+    int size,
+    int max_reasonable_ptt)
 {
   mean_early = 0;
   mean_late = 0;
+  max_correlation = -1;
 
   for (i = 0; i < size; i++)
   {
-    mean_early += ((double) early_array[i]);
-    mean_late += ((double) late_array[i]);
+    mean_early += (early_array[i]);
+    mean_late += (late_array[i]);
   }
   mean_early /= size;
   mean_late /= size;
@@ -42,38 +40,30 @@ void cross_correlate(
   standard_deviation_2 = 0;
   for (i = 0; i < size; i++)
   {
-    standard_deviation_1 += ((double) early_array[i] - mean_early) * ((double) early_array[i] - mean_early);
-    standard_deviation_2 += ((double) late_array[i] - mean_late) * ((double) late_array[i] - mean_late);
+    standard_deviation_1 += (early_array[i] - mean_early) * (early_array[i] - mean_early);
+    standard_deviation_2 += (late_array[i] - mean_late) * (late_array[i] - mean_late);
   }
   denominator = sqrt(standard_deviation_1 * standard_deviation_2);
 
   /* Calculate the correlation series */
   max_delay = size;
-  coefficient_index = 0;
-  for (delay = -max_delay; delay < max_delay; delay++)
+  for (delay = 0; delay < max_reasonable_ptt; delay++)
   {
     numerator = 0;
     for (i = 0; i < size; i++)
     {
       int j = i + delay;
-      if (j < 0 || j >= size) {
+      if (j < 0 || j >= size)
         continue;
-      }
-      else {
-        numerator += ((double) early_array[i] - mean_early) * ((double) late_array[j] - mean_late);
-      }
+      else
+        numerator += (early_array[i] - mean_early) * (late_array[j] - mean_late);
     }
-
     correlation_coefficient = numerator / denominator;
-    return_array[coefficient_index] = correlation_coefficient;
-    coefficient_index++;
-
-    /** optionally log the sxy, result, and delay */
-    if (should_log_result)
+    if (correlation_coefficient > max_correlation)
     {
-      LOG_DBG("sxy %10f ", numerator);
-      LOG_DBG("\tresult %10f", correlation_coefficient);
-      LOG_DBG("\tdelay %i\n", delay);
+      max_correlation = correlation_coefficient;
+      correlation_index = delay;
     }
   }
+  return correlation_index;
 }
