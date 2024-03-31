@@ -12,7 +12,7 @@ static float max_element;
 /**
  * @brief Find how many samples later the late_array is compared to the early_array based on the highest correlation coefficient
  * @param coefficients The array containing the correlation series
- * @param size The size of the smaller of the 2 arrays
+ * @param size The size of the coefficients array
  * @return The number of samples delayed from zero index. Negative means the late_array is earlier than the early_array
  */
 int highest_correlation(
