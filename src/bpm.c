@@ -79,7 +79,8 @@ int bt_bps_notify(uint16_t sys, uint16_t dia) {
 	bp[0] = sys;
 	bp[1] = dia;
 
-	bt_gatt_notify(NULL, &bp_service.attrs[1], &bp, sizeof(bp));
+	err = bt_gatt_notify(NULL, &bp_service.attrs[1], &bp, sizeof(bp));
+	LOG_INF("Sent BP notification: %d,%d (%d)", sys, dia, err);
 
 	return err == -ENOTCONN ? 0 : err;
 }
