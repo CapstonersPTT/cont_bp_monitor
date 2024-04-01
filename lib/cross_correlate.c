@@ -6,7 +6,7 @@
 //Initialize Logger
 LOG_MODULE_REGISTER(cc, LOG_LEVEL_DBG);
 
-int i, j, max_delay, correlation_index, delay, sum_early, sum_late;
+int i, j, correlation_index, delay, sum_early, sum_late;
 float mean_early, mean_late, standard_deviation_1, standard_deviation_2, numerator, denominator, correlation_coefficient, max_correlation;
 
 /**
@@ -46,17 +46,18 @@ int cross_correlate(
   denominator = sqrt(standard_deviation_1 * standard_deviation_2);
 
   /* Calculate the correlation series */
-  max_delay = size;
   for (delay = 0; delay < max_reasonable_ptt; delay++)
   {
     numerator = 0;
     for (i = 0; i < size; i++)
     {
       int j = i + delay;
-      if (j < 0 || j >= size)
-        continue;
-      else
+      if (j < 0 || j >= size){
+
+      }
+      else {
         numerator += (early_array[i] - mean_early) * (late_array[j] - mean_late);
+      }
     }
     correlation_coefficient = numerator / denominator;
     if (correlation_coefficient > max_correlation)
