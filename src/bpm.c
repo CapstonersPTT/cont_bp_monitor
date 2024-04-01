@@ -42,7 +42,7 @@ static ssize_t read_bp(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 				 sizeof(bps_blsc));
 }
 
-/* static ssize_t write_bp(struct bt_conn *conn, const struct bt_gatt_attr *attr,
+static ssize_t write_bp(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 			const void *buf, uint16_t len, uint16_t offset, uint8_t flags) {
 
 	uint8_t *value = attr->user_data;
@@ -54,7 +54,7 @@ static ssize_t read_bp(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	memcpy(value + offset, buf, len);
 
 	return len;
-} */
+}
 
 /* Blood Pressure Service Declaration */
 BT_GATT_SERVICE_DEFINE(bp_service,
@@ -62,7 +62,7 @@ BT_GATT_SERVICE_DEFINE(bp_service,
 	BT_GATT_CHARACTERISTIC(BT_UUID_GATT_BPM, BT_GATT_CHRC_READ |
 			       BT_GATT_CHRC_NOTIFY | BT_GATT_CHRC_WRITE,
 			       BT_GATT_PERM_READ | BT_GATT_PERM_WRITE,
-			       read_bp, NULL, NULL),
+			       read_bp, write_bp, NULL),
 	BT_GATT_CCC(bp_ccc_cfg_changed, BT_GATT_PERM_READ | BT_GATT_PERM_WRITE),
 );
 
