@@ -12,9 +12,9 @@ Continuous Blood Pressure Monitor firmware for nrf52840 DK. The firmware handles
 ### Project Status
 In progess
 
-TODO: port algorithm into firmware, continue testing and tuning sensors, add calibration for LED drive
+TODO: Add BP calculation from PTT, continue testing and tuning sensors, add calibration for LED drive
 
-Testing status: not tested
+Testing status: Tested on Mario's arm
 
 ### Getting Started
 nRF Connect SDK Toolchain version: 2.5.2
