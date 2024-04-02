@@ -300,7 +300,7 @@ int ppg_clear_fifo(const struct spi_dt_spec spi, const struct gpio_dt_spec cs) {
  * @returns spi error code
  *  
 ************************************************************************************/
-int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec spi_p, const struct gpio_dt_spec cs, const struct gpio_dt_spec cs2, uint32_t *distal, uint32_t *proximal, uint16_t num_samples) {
+int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec spi_p, const struct gpio_dt_spec cs_d, const struct gpio_dt_spec cs_p, uint32_t *distal, uint32_t *proximal, uint16_t num_samples) {
     int err = 0;
     uint16_t sample_count = 0;
 
@@ -310,7 +310,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec sp
         spi_rw = 0x0;
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
-        gpio_pin_set_dt(&cs, 1);
+        gpio_pin_set_dt(&cs_p, 1);
         err = spi_write_dt(&spi_p, &tx_bufs);
         if (err < 0) {
             return err;
@@ -319,14 +319,14 @@ int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec sp
         if (err < 0) {
             return err;
         }
-        gpio_pin_set_dt(&cs, 0);
+        gpio_pin_set_dt(&cs_p, 0);
         proximal[sample_count] = spi_rd[1] + (spi_rd[0] << 8);
 
         spi_reg = 0x74;
         spi_rw = 0x0;
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
-        gpio_pin_set_dt(&cs, 1);
+        gpio_pin_set_dt(&cs_p, 1);
         err = spi_write_dt(&spi_p, &tx_bufs);
         if (err < 0) {
             return err;
@@ -335,7 +335,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec sp
         if (err < 0) {
             return err;
         }
-        gpio_pin_set_dt(&cs, 0);
+        gpio_pin_set_dt(&cs_p, 0);
         proximal[sample_count] += (spi_rd[1] << 16) + (spi_rd[0] << 24);
 
         //Read one sample from distal
@@ -343,7 +343,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec sp
         spi_rw = 0x0;
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
-        gpio_pin_set_dt(&cs2, 1);
+        gpio_pin_set_dt(&cs_d, 1);
         err = spi_write_dt(&spi_d, &tx_bufs);
         if (err < 0) {
             return err;
@@ -352,14 +352,14 @@ int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec sp
         if (err < 0) {
             return err;
         }
-        gpio_pin_set_dt(&cs2, 0);
+        gpio_pin_set_dt(&cs_d, 0);
         distal[sample_count] = spi_rd[1] + (spi_rd[0] << 8);
 
         spi_reg = 0x74;
         spi_rw = 0x0;
         tx_buf.len = 1; 
         spi_cmd[0] = spi_rw + (spi_reg << 1);
-        gpio_pin_set_dt(&cs2, 1);
+        gpio_pin_set_dt(&cs_d, 1);
         err = spi_write_dt(&spi_d, &tx_bufs);
         if (err < 0) {
             return err;
@@ -368,7 +368,7 @@ int ppg_read_sensors(const struct spi_dt_spec spi_d, const struct spi_dt_spec sp
         if (err < 0) {
             return err;
         }
-        gpio_pin_set_dt(&cs2, 0);
+        gpio_pin_set_dt(&cs_d, 0);
         distal[sample_count] += (spi_rd[1] << 16) + (spi_rd[0] << 24);
 
         k_msleep(1); //TODO: read sample rate to determine sleep time
