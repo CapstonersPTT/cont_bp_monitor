@@ -1,3 +1,11 @@
+/************************************************************************************
+ * 	
+ * 	@file     ptt_constant_calc.c
+ *  @author   Tej Vyas, Kayshi Shankar, Sam Burke
+ * 	@brief    Calculates the blood pressure constants based on the PTT and a previous
+ *            blood pressure reading
+ *  
+************************************************************************************/
 
 #include <stdio.h>
 #include <math.h>

@@ -1,3 +1,11 @@
+/************************************************************************************
+ * 	
+ * 	@file     derivative_approximate.c
+ *  @author   Andrew Bristow
+ * 	@brief    Takes a derivative of a set of PPG data
+ *  
+************************************************************************************/
+
 #include <stdio.h>
 #include <math.h>
 

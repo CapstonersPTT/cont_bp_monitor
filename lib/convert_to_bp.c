@@ -1,3 +1,10 @@
+/************************************************************************************
+ * 	
+ * 	@file     convert_to_bp.c
+ *  @author   Tej Vyas, Kayshi Shankar, Sam Burke
+ * 	@brief    Converts the PTT value to a blood pressure reading
+ *  
+************************************************************************************/
 
 #include <stdio.h>
 #include <math.h>

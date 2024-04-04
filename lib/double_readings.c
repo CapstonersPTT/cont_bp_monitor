@@ -1,3 +1,11 @@
+/************************************************************************************
+ * 	
+ * 	@file     double_readings.c
+ *  @author   Andrew Bristow
+ * 	@brief    Interpolates a set of PPG data to increase data resolution
+ *  
+************************************************************************************/
+
 #include <stdio.h>
 #include <math.h>
 

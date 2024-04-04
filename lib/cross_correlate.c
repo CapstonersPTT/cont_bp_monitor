@@ -1,3 +1,12 @@
+/************************************************************************************
+ * 	
+ * 	@file     cross_correlate.c
+ *  @author   Tej Vyas, Kayshi Shankar, Sam Burke, Andrew Bristow
+ * 	@brief    Performs a cross correlation on the PPG data and returns the index
+ *            with the highest correlation
+ *  
+************************************************************************************/
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>

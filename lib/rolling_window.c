@@ -1,3 +1,11 @@
+/************************************************************************************
+ * 	
+ * 	@file     rolling_window.c
+ *  @author   Andrew Bristow
+ * 	@brief    Calculates a rolling average of a set of PPG data
+ *  
+************************************************************************************/
+
 #include <stdio.h>
 #include <math.h>
 
