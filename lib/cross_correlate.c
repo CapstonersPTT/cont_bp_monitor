@@ -42,7 +42,7 @@ int cross_correlate(
   denominator = sqrt(standard_deviation_1 * standard_deviation_2);
 
   /* Calculate the correlation series */
-  for (delay = -max_reasonable_ptt; delay < max_reasonable_ptt; delay++)
+  for (delay = 0; delay < max_reasonable_ptt; delay++)
   {
     numerator = 0;
     for (i = 0; i < size; i++)

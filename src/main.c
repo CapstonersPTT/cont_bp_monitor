@@ -29,6 +29,7 @@
 #include "../lib/derivative_approximate.h"
 #include "../lib/double_readings.h"
 #include "../lib/rolling_window.h"
+#include "../lib/ptt_constant_calc.h"
 
 
 #include <zephyr/bluetooth/bluetooth.h>
@@ -56,8 +57,10 @@ LOG_MODULE_REGISTER(bp, LOG_LEVEL_DBG);
 #define STARTING_SMOOTHING_WINDOW 120
 #define DERIVATIVE_DELTA 20
 
-#define K_A 10
-#define K_B 420
+//IM ASSUMING I HAVE NORMAL BLOOD PRESSURE
+//TODO: add a way to input these from the app
+#define SYS 120
+#define DIA 80
 #define K_C 6
 
 //Thread priorities
@@ -100,7 +103,7 @@ static const struct bt_data ad[] = {
 
 void mtu_updated(struct bt_conn *conn, uint16_t tx, uint16_t rx)
 {
-	printk("Updated MTU: TX: %d RX: %d bytes\n", tx, rx);
+	LOG_DBG("Updated MTU: TX: %d RX: %d bytes\n", tx, rx);
 }
 
 static struct bt_gatt_cb gatt_callbacks = {
@@ -111,7 +114,7 @@ static void bt_ready(void)
 {
 	int err;
 
-	printk("Bluetooth initialized\n");
+	LOG_INF("Bluetooth initialized\n");
 
 	if (IS_ENABLED(CONFIG_SETTINGS)) {
 		settings_load();
@@ -119,11 +122,11 @@ static void bt_ready(void)
 
 	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err) {
-		printk("Advertising failed to start (err %d)\n", err);
+		LOG_ERR("Advertising failed to start (err %d)\n", err);
 		return;
 	}
 
-	printk("Advertising successfully started\n");
+	LOG_INF("Advertising successfully started\n");
 }
 
 static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
@@ -132,7 +135,7 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
-	printk("Passkey for %s: %06u\n", addr, passkey);
+	LOG_DBG("Passkey for %s: %06u\n", addr, passkey);
 }
 
 static void auth_cancel(struct bt_conn *conn)
@@ -141,7 +144,7 @@ static void auth_cancel(struct bt_conn *conn)
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
-	printk("Pairing cancelled: %s\n", addr);
+	LOG_DBG("Pairing cancelled: %s\n", addr);
 }
 
 static struct bt_conn_auth_cb auth_cb_display = {
@@ -151,10 +154,17 @@ static struct bt_conn_auth_cb auth_cb_display = {
 };
 
 void read_thread(void) {
-	LOG_INF("Entering read_thread\n");
+	LOG_DBG("Entering read_thread\n");
 	int err = 0;
 	int samples_delayed;
 	float ptt;
+	uint16_t systolic, diastolic;
+	int ptt_sum_samples = 0;
+	int ptt_readings = 0;
+	float average_samples_delayed;
+	float K_a, K_b;
+	bool calibrating = true;
+	
 	#if !USE_TEST_DATA
 	//Reset PPG sensor
 	err = ppg_software_reset(spi_ppg_dist, ppg_csd);
@@ -247,8 +257,8 @@ void read_thread(void) {
 			LOG_ERR("SPI2 Write failed (%d)\n", err);
 	}
 	#endif
-
-	LOG_INF("Starting read loop\n");
+	k_msleep(5000);
+	LOG_DBG("Starting read loop\n");
 	//Read from PPG Sensor
 	while (err == 0) {
 		#if !USE_TEST_DATA
@@ -270,8 +280,9 @@ void read_thread(void) {
 
 		LOG_INF("Calculating...");
 		//Process raw signal
-		//TODO: add better signal processing lol
-		for (int sw = STARTING_SMOOTHING_WINDOW; sw < 341; sw+=20)
+		ptt_sum_samples = 0;
+		ptt_readings = 0;
+		for (int sw = STARTING_SMOOTHING_WINDOW; sw < 321; sw+=40)
 		{
 			int size_of_raw_smoothed = PPG_ARRAY_SIZE - sw;
 			int size_of_first_derivative = size_of_raw_smoothed - DERIVATIVE_DELTA;
@@ -309,22 +320,29 @@ void read_thread(void) {
 
 			/** calculate the ptt based on the sample rate and peak location */
 			/** also add one to account for the fact that we don't interpolate before first point. */
-			ptt = (float)(samples_delayed + 1) / PPG_SAMPLE_RATE / 2;
-			// printf("PTT: %f\t\t", ptt);
-			printf("%d,", sw);
-			printf("%d\n", samples_delayed);
+			ptt_sum_samples += (samples_delayed + 1);
+    		ptt_readings++;
 		}
-		LOG_INF("Done Calculating");
-		/*
-		//Cross correlate the proximal and distal data
-		samples_delayed = cross_correlate(proximal, distal, PPG_ARRAY_SIZE, MAX_PTT);
-
-		LOG_INF("Delay: %d", samples_delayed);
-		//calculate the ptt based on the sample rate and peak location
-		ptt = ((float) samples_delayed / (float) PPG_SAMPLE_RATE);
-
-		bt_bps_notify(samples_delayed, 1);
-		*/
+		average_samples_delayed = (float)ptt_sum_samples / (float)ptt_readings;
+		ptt = average_samples_delayed / (PPG_SAMPLE_RATE * 2);
+		LOG_DBG("Average PTT: %f\n", ptt);
+		//Calibrate on first loop
+		//TODO: add input to trigger calibration
+		if (calibrating) {
+			K_a = find_Ka(ptt, SYS, DIA);
+			K_b = find_Kb(K_C, ptt, SYS, DIA);
+			LOG_INF("Ka: %f\n", K_a);
+			LOG_INF("Kb: %f\n", K_b);
+			calibrating = false;
+		}
+		else {
+			systolic = systolic_BP(ptt, K_a, K_b, K_C);
+			diastolic = diastolic_BP(ptt, K_a, K_b, K_C);
+			LOG_INF("Done Calculating");
+			bt_bps_notify(systolic, diastolic);
+			LOG_INF("Blood Pressure: %d/%d\n", systolic, diastolic);
+		}
+		
 		k_msleep(SENSOR_SLEEP_MS);
 	}
 
